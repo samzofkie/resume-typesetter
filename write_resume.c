@@ -71,6 +71,7 @@ void init_doc(void)
   cairo_set_line_width(doc.cr, 0.5);
 }
 
+
 TextStyle *get_style(Text *t)
 {
   return &doc.styles[t->style_type];
@@ -138,34 +139,26 @@ void write(Text *t) {
   PangoLayout *layout;
   double layout_width, layout_height;
   layout = create_layout_get_size(t, &layout_width, &layout_height);
+  double x = doc.margin, 
+         y = doc.cursor;
+  TextStyle style = *get_style(t);
 
   if (layout_width > doc.width - doc.margin * 2)
     return write_long_line(t);
-
-  double x = doc.margin, 
-         y = doc.cursor;
-
-  TextStyle style = *get_style(t);
   
   if (style.alignment == Center)
     x = (doc.width - layout_width) / 2;
+  
   else if (style.alignment == Right)
     x = doc.width - doc.margin - layout_width;
-  
-  /* 
-  if (t.style.alignment == Center)
-    x = (doc->width - w) / 2;
-  else if (t.style.alignment == Right)
-    x = doc->width - doc->margin - w;
-
-  if (t.style.section_line) {
-    cairo_move_to(doc->cr, doc->margin + w, y + h/2 + 2);
-    cairo_line_to(doc->cr, doc->width - doc->margin, y + h/2 + 2);
-    cairo_stroke(doc->cr); 
+   
+  if (style.section_line) {
+    double line_y = y + layout_height/2 + 2;
+    cairo_move_to(doc.cr, x + layout_width, line_y);
+    cairo_line_to(doc.cr, doc.width - x, line_y);
+    cairo_stroke(doc.cr); 
   }
-  */
   
-  printf("Here\n"); 
   cairo_move_to(doc.cr, x, y);
   pango_cairo_show_layout(doc.cr, layout);
   g_object_unref(layout);
@@ -175,30 +168,30 @@ void write(Text *t) {
 }
 
 
-void add(const char *str, enum TextStyleType t)
+Text *alloc_text(const char *str, enum TextStyleType type)
 {
   Text *new = (Text*)malloc(sizeof(Text));
-  
-  new->text = (char*)malloc(sizeof(str));
-  strcpy(new->text, str); 
-  new->style_type = t;
+  new->text = (char*)malloc(strlen(str)+1);
+  strcpy(new->text, str);
+  new->style_type = type;
+  new->next = NULL;
+  return new;
+}
 
-  
+
+void add(const char *str, enum TextStyleType type)
+{
+  Text *new = alloc_text(str, type);
+
   if (!doc.head) {
-    doc.head = new; 
-  
-    printf("here\n");
-  } else {
-    
-
-    Text *node = doc.head;
-    
-    while (node->next) {
-      node = node->next;
-    }
-    
-    node->next = new;
+    doc.head = new;
+    return;
   }
+
+  Text *last_node = doc.head;
+  while (last_node->next)
+    last_node = last_node->next;
+  last_node->next = new;
 };
 
 
@@ -222,10 +215,8 @@ int main (int argc, char **argv)
   add("Sam Zofkie", Title);
   add("samzofkie@gmail.com  •  github.com/samzofkie  •  samzofkie.com  •  17735510259  •  Chicago, IL", Subtitle);
 
-  for (Text *p=doc.head; p; p=p->next) {
-    printf("writing: %s\n", p->text);
+  for (Text *p=doc.head; p; p=p->next)
     write(p);
-  }
   
   /*Text lines[] = {
     {"Sam Zofkie", title},
@@ -243,11 +234,8 @@ int main (int argc, char **argv)
     {"Skills", section_title},
     {"Proficient: C, C++, JavaScript, React, Git, Unix", subtitle},
     {"Familiar: Python, Bash, Docker, SQL, AWS, HTML, CSS", subtitle}
-  };
+  }; */ 
   
-  for (int i=0; i<15; i++)
-    draw_text(&doc, lines[i]);*/
-
   cleanup_doc();
 
   return 0;
