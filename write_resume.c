@@ -12,9 +12,6 @@
 
 enum Alignment {Left, Right, Center};
 
-enum TextStyleType {Title, Subtitle, SectionTitle,
-                    ProjectTitle, Normal12, Bullet};
-
 typedef struct {
   const char *font_string;
   int font_size;
@@ -23,6 +20,10 @@ typedef struct {
   double cursor_increment;
   bool newline;
 } TextStyle;
+
+enum TextStyleType {Title, Subtitle, SectionTitle,
+                    ProjectTitle, Normal12, NoNewline12,
+                    Right12, Bullet};
 
 typedef struct _Text {
   char *text; 
@@ -52,7 +53,9 @@ static Document doc = {
       {"Cantarell", 12, Center, false, 15, true},      // Subtitle
       {"Cantarell Bold", 18, Left, true, 2, true},     // SectionTitle
       {"Cantarell", 14, Left, false, 2, true},         // ProjectTitle
-      {"Cantarell", 12, Right, false, 2, true},        // Normal12
+      {"Cantarell", 12, Left, false, 2, true},         // Normal12
+      {"Cantarell", 12, Left, false, 2, false},        // NoNewline12
+      {"Cantarell", 12, Right, false, 2, true},        // Right12
       {"Cantarell", 10, Left, false, 1, true}          // Bullet
     }
 };
@@ -99,7 +102,8 @@ PangoLayout *create_layout_get_size(Text *t, double *w, double *h)
 
 void write_long_line(Text *t)
 {
-/*
+  printf("too long!\n");
+  /*
   if (w > max_width) {
     int i = 0, prev = 0;
     char short_str[strlen(t.text)];
@@ -155,7 +159,7 @@ void write(Text *t) {
   if (style.section_line) {
     double line_y = y + layout_height/2 + 2;
     cairo_move_to(doc.cr, x + layout_width, line_y);
-    cairo_line_to(doc.cr, doc.width - x, line_y);
+    cairo_line_to(doc.cr, doc.width - doc.margin, line_y);
     cairo_stroke(doc.cr); 
   }
   
@@ -213,29 +217,24 @@ int main (int argc, char **argv)
   init_doc();
 
   add("Sam Zofkie", Title);
-  add("samzofkie@gmail.com  •  github.com/samzofkie  •  samzofkie.com  •  17735510259  •  Chicago, IL", Subtitle);
+  add("samzofkie@gmail.com  •  github.com/samzofkie  •  samzofkie.com", Subtitle);
+  add("Education", SectionTitle);
+  add("Reed College, B.A. Computer Science", NoNewline12);
+  add("2016-2020", Right12);
+  add("Projects", SectionTitle);
+  add("Youtube Game", ProjectTitle);
+  add("• Created web app to display randomly chosen YouTube videos using Flask and React.", Bullet);
+  add("• Designed gibberish search word algorithm and implemented crawler in Python to populate SQLite database with video URLs using Python.", Bullet);
+  add("• Researched and implemented JavaScript CSS technique to hide HTML iframes to improve UI responsiveness.", Bullet);
+  add("X11 PulseAudio DAW", ProjectTitle);
+  add("Automated Linux From Scratch", ProjectTitle);
+  add("Skills", SectionTitle);
+  add("Proficient: C, C++, JavaScript, React, Git, Unix", Normal12);
+  add("Familiar: Python, Bash, Docker, SQL, AWS, HTML, CSS", Normal12);
 
   for (Text *p=doc.head; p; p=p->next)
     write(p);
-  
-  /*Text lines[] = {
-    {"Sam Zofkie", title},
-    {"samzofkie@gmail.com  •  github.com/samzofkie  •  samzofkie.com  •  17735510259  •  Chicago, IL", subtitle},
-    {"Education", section_title},
-    {"Reed College, B.A. Computer Science", (TextStyle){"Cantarell", 12, Left, false, 2, false} },
-    {"2016-2020", left_12},
-    {"Projects", section_title},
-    {"YouTube Game", project_title},
-    {"• Created web app to display randomly chosen YouTube videos using Flask and React.", bullet},
-    {"• Designed gibberish search word algorithm and implemented crawler in Python to populate SQLite database with video URLs using Python.", bullet},
-    {"• Researched and implemented JavaScript CSS technique to hide HTML iframes to improve UI responsiveness.", bullet},
-    {"X11 PulseAudio DAW", project_title},
-    {"Automated Linux From Scratch", project_title},
-    {"Skills", section_title},
-    {"Proficient: C, C++, JavaScript, React, Git, Unix", subtitle},
-    {"Familiar: Python, Bash, Docker, SQL, AWS, HTML, CSS", subtitle}
-  }; */ 
-  
+    
   cleanup_doc();
 
   return 0;
