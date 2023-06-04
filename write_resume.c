@@ -100,42 +100,53 @@ PangoLayout *create_layout_get_size(Text *t, double *w, double *h)
 }
 
 
+Text *alloc_text(const char *str, enum TextStyleType type)
+{
+  Text *new = (Text*)malloc(sizeof(Text));
+  new->text = (char*)malloc(strlen(str)+1);
+  strcpy(new->text, str);
+  new->style_type = type;
+  new->next = NULL;
+  return new;
+}
+
+
+void *dealloc_text(Text *t)
+{
+  free(t->text);
+  free(t);
+}
+
+
 void write_long_line(Text *t)
 {
-  printf("too long!\n");
-  /*
-  if (w > max_width) {
-    int i = 0, prev = 0;
-    char short_str[strlen(t.text)];
-    memset(short_str, '\0', sizeof(short_str));
-    do {
-      prev = i;
-      
-      for (; t.text[i] != ' '; i++) {}
-      strncpy(short_str, t.text, i);
-      i++;  
-      
-      Text short_text = { short_str, t.style };
-      layout = create_layout_get_size(doc, short_text, &w, &h);
-    
-    } while (w < max_width);
-    
-    // Draw first line
-    memset(short_str, '\0', sizeof(short_str));
-    strncpy(short_str, t.text, prev);
-    Text first_line = {short_str, t.style};
-    draw_text(doc, first_line);
+  PangoLayout *layout;
+  double max_width = doc.width - doc.margin * 2;
+  double w, h;
+  int i = 0, prev;
+  char first_line[strlen(t->text)];
+  memset(first_line, '\0', strlen(t->text));
 
-    // Draw rest
-    char rest[strlen(t.text)];
-    memset(rest, '\0', sizeof(rest));
-    strncpy(rest, t.text + prev, strlen(t.text) - prev);
-    Text rest_text = {rest, t.style};
-    draw_text(doc, rest_text);
+  do {
+    prev = i;
 
-    return;
-  }
-    */
+    for (; t->text[i] != ' '; i++) ;
+
+    strncpy(first_line, t->text, i);
+    i++;
+
+    Text *potential_line = alloc_text(first_line, t->style_type);
+    layout = create_layout_get_size(potential_line, &w, &h);
+    dealloc_text(potential_line);
+  } while (w < max_width);
+
+  Text *first_line_text = alloc_text(first_line, t->style_type);
+  write(first_line_text);
+
+  char remainder[strlen(t->text)];
+  strcpy(remainder, first_line);
+  Text *remainder_text = alloc_text(remainder, t->style_type);
+  write(remainder_text);
 }
 
 
@@ -172,17 +183,6 @@ void write(Text *t) {
 }
 
 
-Text *alloc_text(const char *str, enum TextStyleType type)
-{
-  Text *new = (Text*)malloc(sizeof(Text));
-  new->text = (char*)malloc(strlen(str)+1);
-  strcpy(new->text, str);
-  new->style_type = type;
-  new->next = NULL;
-  return new;
-}
-
-
 void add(const char *str, enum TextStyleType type)
 {
   Text *new = alloc_text(str, type);
@@ -205,7 +205,7 @@ void cleanup_doc(void)
   while (curr) {
     prev = curr;
     curr = curr->next;
-    free(prev);
+    dealloc_text(prev);
   }
   cairo_destroy(doc.cr);
   cairo_surface_destroy(doc.surface); 
