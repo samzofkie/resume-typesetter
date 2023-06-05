@@ -56,11 +56,6 @@ void write_long_line(Text *t)
   Text *remainder_text = alloc_text(remainder, t->style_type);
   write(remainder_text);
 }
-
-
-
-  else if (style.alignment == Right)
-    x = doc.width - doc.margin - layout_width;
 */
 
 static const double doc_width = 8.5*72,
@@ -100,6 +95,10 @@ void draw_and_free_layout(double x, double y, PangoLayout *l) {
 
 void Center(double *x, TextLayout l) {
   *x = (doc_width - l.width) / 2;
+}
+
+void Right(double *x, TextLayout l) {
+  *x = doc_width - margin - l.width;
 }
 
 void SectionLine(double x, double y, TextLayout l) {
@@ -143,7 +142,22 @@ void SectionTitle(const char *str) {
   cursor += text_layout.height + 2;
 }
 
-void SplitLine(const char *left, const char *right);
+void SplitLine(const char *left, const char *right) {
+  double x = margin, y = cursor;
+  TextLayout text_layout = new_layout(left, "Cantarell", 12);
+
+  draw_and_free_layout(x, y, text_layout.layout);
+
+  x = margin, y = cursor;
+  text_layout = new_layout(right, "Cantarell", 12);
+
+  Right(&x, text_layout);
+
+  draw_and_free_layout(x, y, text_layout.layout);
+  
+  cursor += text_layout.height + 2;
+}
+
 void SubSectionTitle(const char *str);
 void Bullet(const char *str);
 
@@ -159,10 +173,9 @@ int main (int argc, char **argv) {
   Title("Sam Zofkie");
   Subtitle("samzofkie@gmail.com  •  github.com/samzofkie  •  samzofkie.com");
   SectionTitle("Education");
+  SplitLine("Reed College, B.A. Computer Science", "2016-2020");
+  SectionTitle("Projects");
   /*
-  add("Reed College, B.A. Computer Science", NoNewline12);
-  add("2016-2020", Right12);
-  add("Projects", SectionTitle);
   add("Youtube Game", ProjectTitle);
   add("• Created web app to display randomly chosen YouTube videos using Flask and React.", Bullet);
   add("• Designed gibberish search word algorithm and implemented crawler in Python to populate SQLite database with video URLs using Python.", Bullet);
