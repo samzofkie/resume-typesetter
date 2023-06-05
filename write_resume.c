@@ -4,7 +4,6 @@
 #include <pango/pangocairo.h>
 
 // TODO
-// * linked list
 // * refactor line wrap
 // * section / bullet func
 // * beautify all (const members of struct)
@@ -214,55 +213,61 @@ void cleanup_doc(void)
 
 static const double doc_width = 8.5*72,
                     doc_height = 11*72,
-                    margin = 25,
-                    cursor = margin;
+                    margin = 25;
+static double cursor = margin;
 static cairo_surface_t *surface;
 static cairo_t *cr;
 
 
-void Title(const char *str) {
+typedef struct {
+  PangoLayout *layout;
+  double width, height;
+} TextLayout;
+
+
+TextLayout new_layout(const char *str, const char *font_str, int font_size) {
   PangoLayout *layout = pango_cairo_create_layout(cr);
-  PangoFontDescription *font_desc = pango_font_description_from_string("Cantarell Bold");
+  PangoFontDescription *font_desc = pango_font_description_from_string(font_str);
   
   pango_layout_set_text(layout, str, -1); 
-  pango_font_description_set_size(font_desc, 26 * PANGO_SCALE);
+  pango_font_description_set_size(font_desc, font_size * PANGO_SCALE);
   pango_layout_set_font_description(layout, font_desc);
   pango_font_description_free(font_desc);
 
-  int _w, _h;
-  pango_layout_get_size(layout, &_w, &_h);
-  double w = (double)_w / PANGO_SCALE;
-  double h = (double)_h / PANGO_SCALE;
-
-  double x = margin, 
-         y = cursor;
-
-  /*if (layout_width > doc_width - margin * 2)
-    return write_long_line(t);
-  
-  if (style.alignment == Center)
-    x = (doc.width - layout_width) / 2;
-  
-  else if (style.alignment == Right)
-    x = doc.width - doc.margin - layout_width;
+  int w, h;
+  pango_layout_get_size(layout, &w, &h);
    
-  if (style.section_line) {
-    double line_y = y + layout_height/2 + 2;
-    cairo_move_to(doc.cr, x + layout_width, line_y);
-    cairo_line_to(doc.cr, doc.width - doc.margin, line_y);
-    cairo_stroke(doc.cr); 
-  }*/
-  
+  return (TextLayout){layout, (double)w / PANGO_SCALE, (double)h / PANGO_SCALE};
+}
+
+
+void draw_and_free_layout(double x, double y, PangoLayout *l) {
   cairo_move_to(cr, x, y);
-  pango_cairo_show_layout(cr, layout);
-  g_object_unref(layout);
+  pango_cairo_show_layout(cr, l);
+  g_object_unref(l);
+}
 
-  /*if (style.newline)
-    doc.cursor += layout_height + style.cursor_increment;*/
 
+void Center(double *x, TextLayout l) {
+  *x = (doc_width - l.width) / 2;
+}
+
+
+void Title(const char *str) {
+  double x = margin, y = cursor;
+  TextLayout text_layout = new_layout(str, "Cantarell Bold", 26);
+
+  Center(&x, text_layout);
+  
+  draw_and_free_layout(x, y, text_layout.layout);
+  
+  cursor += text_layout.height + 15;
 };
 
+
 void Subtitle(const char *str);
+
+
 void SectionTitle(const char *str);
 void SplitLine(const char *left, const char *right);
 void SubSectionTitle(const char *str);
