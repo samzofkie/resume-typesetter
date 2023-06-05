@@ -265,7 +265,16 @@ void Title(const char *str) {
 };
 
 
-void Subtitle(const char *str);
+void Subtitle(const char *str) {
+  double x = margin, y = cursor;
+  TextLayout text_layout = new_layout(str, "Cantarell", 12);
+
+  Center(&x, text_layout);
+
+  draw_and_free_layout(x, y, text_layout.layout);
+
+  cursor += text_layout.height + 15;
+}
 
 
 void SectionTitle(const char *str);
@@ -283,6 +292,7 @@ int main (int argc, char **argv) {
   cairo_set_line_width(cr, 0.5);
 
   Title("Sam Zofkie");
+  Subtitle("samzofkie@gmail.com  •  github.com/samzofkie  •  samzofkie.com");
   /*
   add("Sam Zofkie", Title);
   add("samzofkie@gmail.com  •  github.com/samzofkie  •  samzofkie.com", Subtitle);
