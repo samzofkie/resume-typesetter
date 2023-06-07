@@ -3,6 +3,10 @@
 #include <cairo-pdf.h>
 #include <pango/pangocairo.h>
 
+// TODO
+// * bullet function
+// * section meta function
+
 /*
 void write_long_line(Text *t)
 {
@@ -128,8 +132,13 @@ void SubSectionTitle(const char *str) {
   Render(str, "Cantarell Bold", 12, NULL, 0, 2);
 }
 
-void Bullet(const char *str);
+void Bullet(const char *str) {
 
+}
+
+void Center12Point(const char *str) {
+  Render(str, "Cantarell", 12, &Center, 1, 2);
+}
 
 int main (int argc, char **argv) {
   surface = cairo_pdf_surface_create("resume.pdf", doc_width, doc_height);
@@ -144,18 +153,17 @@ int main (int argc, char **argv) {
   SectionTitle("Education");
   SplitLine("Reed College, B.A. Computer Science", "2016-2020");
   SectionTitle("Projects");
-  SubSectionTitle("Youtube Game");
-
-  SubSectionTitle("X11 PulseAudio DAW");
   SubSectionTitle("Automated Linux From Scratch");
+  SubSectionTitle("Youtube Game");
+  SubSectionTitle("X11 PulseAudio DAW");
   SectionTitle("Skills");
+  Center12Point("Proficient: C, C++, JavaScript, React, Git, Unix");
+  Center12Point("Familiar: Python, Bash, Docker, SQL, AWS, HTML, CSS");
+  
   /*
   add("• Created web app to display randomly chosen YouTube videos using Flask and React.", Bullet);
   add("• Designed gibberish search word algorithm and implemented crawler in Python to populate SQLite database with video URLs using Python.", Bullet);
   add("• Researched and implemented JavaScript CSS technique to hide HTML iframes to improve UI responsiveness.", Bullet);
-
-  add("Proficient: C, C++, JavaScript, React, Git, Unix", Normal12);
-  add("Familiar: Python, Bash, Docker, SQL, AWS, HTML, CSS", Normal12);
   */
 
   cairo_destroy(cr);
