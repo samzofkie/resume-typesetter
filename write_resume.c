@@ -4,28 +4,6 @@
 #include <pango/pangocairo.h>
 
 /*
-typedef struct {
-  const char *font_string;
-  int font_size;
-  enum Alignment alignment;
-  bool section_line;
-  double cursor_increment;
-  bool newline;
-} TextStyle;
-
-    {
-      {"Cantarell Bold", 26, Center, false, 15, true}, // Title
-      {"Cantarell", 12, Center, false, 15, true},      // Subtitle
-      {"Cantarell Bold", 18, Left, true, 2, true},     // SectionTitle
-      {"Cantarell", 14, Left, false, 2, true},         // ProjectTitle
-      {"Cantarell", 12, Left, false, 2, true},         // Normal12
-      {"Cantarell", 12, Left, false, 2, false},        // NoNewline12
-      {"Cantarell", 12, Right, false, 2, true},        // Right12
-      {"Cantarell", 10, Left, false, 1, true}          // Bullet
-    }
-};
-
-
 void write_long_line(Text *t)
 {
   PangoLayout *layout;
@@ -71,6 +49,7 @@ typedef struct {
   double width, height;
 } TextLayout;
 
+
 TextLayout new_layout(const char *str, const char *font_str, int font_size) {
   PangoLayout *layout = pango_cairo_create_layout(cr);
   PangoFontDescription *font_desc = pango_font_description_from_string(font_str);
@@ -86,6 +65,7 @@ TextLayout new_layout(const char *str, const char *font_str, int font_size) {
   return (TextLayout){layout, (double)w / PANGO_SCALE, (double)h / PANGO_SCALE};
 }
 
+
 void draw_and_free_layout(double x, double y, PangoLayout *l) {
   cairo_move_to(cr, x, y);
   pango_cairo_show_layout(cr, l);
@@ -93,72 +73,61 @@ void draw_and_free_layout(double x, double y, PangoLayout *l) {
 }
 
 
-void Center(double *x, TextLayout l) {
+void Center(TextLayout l, double *x, double *y) {
   *x = (doc_width - l.width) / 2;
 }
 
-void Right(double *x, TextLayout l) {
+
+void Right(TextLayout l, double *x, double *y) {
   *x = doc_width - margin - l.width;
 }
 
-void SectionLine(double x, double y, TextLayout l) {
-  double line_y = y + l.height/2 + 2;
-  cairo_move_to(cr, x + l.width, line_y);
+
+void SectionLine(TextLayout l, double *x, double *y) {
+  double line_y = *y + l.height/2 + 2;
+  cairo_move_to(cr, *x + l.width, line_y);
   cairo_line_to(cr, doc_width - margin, line_y);
   cairo_stroke(cr);
 }
 
 
-void Title(const char *str) {
+void Render(const char *str, 
+           const char *font_str, 
+           int font_size, 
+           void (*format_fns)(TextLayout, double*, double*),  
+           int num_fns,
+           double line_increment) {
   double x = margin, y = cursor;
-  TextLayout text_layout = new_layout(str, "Cantarell Bold", 26);
+  TextLayout tl = new_layout(str, font_str, font_size);
+  if (num_fns) //for (int i=0; i<num_fns; i++)
+    (*format_fns)(tl, &x, &y);
+  draw_and_free_layout(x, y, tl.layout);
+  if (line_increment > 0)
+    cursor += tl.height + line_increment;
+}
 
-  Center(&x, text_layout);
-  
-  draw_and_free_layout(x, y, text_layout.layout);
-  
-  cursor += text_layout.height + 15;
-};
+
+void Title(const char *str) {
+  Render(str, "Cantarell Bold", 26, &Center, 1, 15);
+}
 
 void Subtitle(const char *str) {
-  double x = margin, y = cursor;
-  TextLayout text_layout = new_layout(str, "Cantarell", 12);
-
-  Center(&x, text_layout);
-
-  draw_and_free_layout(x, y, text_layout.layout);
-
-  cursor += text_layout.height + 15;
+  Render(str, "Cantarell", 12, &Center, 1, 15);
 }
 
 void SectionTitle(const char *str) {
-  double x = margin, y = cursor;
-  TextLayout text_layout = new_layout(str, "Cantarell Bold", 18);
-
-  SectionLine(x, y, text_layout);
-
-  draw_and_free_layout(x, y, text_layout.layout);
-
-  cursor += text_layout.height + 2;
+  Render(str, "Cantarell Bold", 18, &SectionLine, 1, 2);
 }
 
 void SplitLine(const char *left, const char *right) {
-  double x = margin, y = cursor;
-  TextLayout text_layout = new_layout(left, "Cantarell", 12);
-
-  draw_and_free_layout(x, y, text_layout.layout);
-
-  x = margin, y = cursor;
-  text_layout = new_layout(right, "Cantarell", 12);
-
-  Right(&x, text_layout);
-
-  draw_and_free_layout(x, y, text_layout.layout);
-  
-  cursor += text_layout.height + 2;
+  Render(left, "Cantarell", 12, NULL, 0, -1);
+  Render(right, "Cantarell", 12, &Right, 1, 2);
 }
 
-void SubSectionTitle(const char *str);
+void SubSectionTitle(const char *str) {
+  Render(str, "Cantarell Bold", 12, NULL, 0, 2);
+}
+
 void Bullet(const char *str);
 
 
@@ -175,14 +144,16 @@ int main (int argc, char **argv) {
   SectionTitle("Education");
   SplitLine("Reed College, B.A. Computer Science", "2016-2020");
   SectionTitle("Projects");
+  SubSectionTitle("Youtube Game");
+
+  SubSectionTitle("X11 PulseAudio DAW");
+  SubSectionTitle("Automated Linux From Scratch");
+  SectionTitle("Skills");
   /*
-  add("Youtube Game", ProjectTitle);
   add("• Created web app to display randomly chosen YouTube videos using Flask and React.", Bullet);
   add("• Designed gibberish search word algorithm and implemented crawler in Python to populate SQLite database with video URLs using Python.", Bullet);
   add("• Researched and implemented JavaScript CSS technique to hide HTML iframes to improve UI responsiveness.", Bullet);
-  add("X11 PulseAudio DAW", ProjectTitle);
-  add("Automated Linux From Scratch", ProjectTitle);
-  add("Skills", SectionTitle);
+
   add("Proficient: C, C++, JavaScript, React, Git, Unix", Normal12);
   add("Familiar: Python, Bash, Docker, SQL, AWS, HTML, CSS", Normal12);
   */
