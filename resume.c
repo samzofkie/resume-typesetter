@@ -1,7 +1,6 @@
-#include <math.h>
-#include <stdbool.h>
 #include <cairo-pdf.h>
 #include <pango/pangocairo.h>
+#include "resume.h"
 
 // TODO
 // * bullet function
@@ -48,12 +47,6 @@ static cairo_surface_t *surface;
 static cairo_t *cr;
 
 
-typedef struct {
-  PangoLayout *layout;
-  double width, height;
-} TextLayout;
-
-
 TextLayout new_layout(const char *str, const char *font_str, int font_size) {
   PangoLayout *layout = pango_cairo_create_layout(cr);
   PangoFontDescription *font_desc = pango_font_description_from_string(font_str);
@@ -84,6 +77,11 @@ void Center(TextLayout l, double *x, double *y) {
 
 void Right(TextLayout l, double *x, double *y) {
   *x = doc_width - margin - l.width;
+}
+
+
+void Indent(TextLayout l, double *x, double *y) {
+  *x += margin;
 }
 
 
@@ -132,13 +130,43 @@ void SubSectionTitle(const char *str) {
   Render(str, "Cantarell Bold", 12, NULL, 0, 2);
 }
 
-void Bullet(const char *str) {
 
+int index_of_next_space(const char *str, int end) {
+  while (--end != 0)
+    if (str[end] == ' ')
+      break;
+  return end;
+}
+
+
+int longest_str_that_fits_in(char *str, double width) {
+  //printf("%s\n", str); 
+  int i = strlen(str);
+  double new_width;
+  while (new_width = new_layout(str, "Cantarell", 9).width > width) {
+    i = index_of_next_space(str, i);
+    str[i] = 0;
+  }
+  return i;
+}
+
+void Bullet(const char *str) {
+  // strlen("Whats up") is 8 
+  double max_width = doc_width - margin * 4;
+
+  for (int start=0, end=0; start < strlen(str); start += end) {
+    end = longest_str_that_fits_in((char*)str+start, max_width);
+    //char *test = (char*)malloc(end-start+1);
+    //strncpy(test, str + start, end);
+    //Render(test, "Cantarell", 9, &Indent, 1, 2);
+    //free(test);
+  } 
 }
 
 void Center12Point(const char *str) {
   Render(str, "Cantarell", 12, &Center, 1, 2);
 }
+
 
 int main (int argc, char **argv) {
   surface = cairo_pdf_surface_create("resume.pdf", doc_width, doc_height);
@@ -155,6 +183,7 @@ int main (int argc, char **argv) {
   SectionTitle("Projects");
   SubSectionTitle("Automated Linux From Scratch");
   SubSectionTitle("Youtube Game");
+  Bullet("Whats up w all that shit that happens when that thing goes down u dont even know whatll happen when n all that shitll b crazy n shit will go nuts");
   SubSectionTitle("X11 PulseAudio DAW");
   SectionTitle("Skills");
   Center12Point("Proficient: C, C++, JavaScript, React, Git, Unix");
