@@ -1,4 +1,12 @@
+#ifndef RESUME_H
+#define RESUME_H
+
 #include <pango/pangocairo.h>
+
+extern const double doc_width, doc_height, margin;
+extern double cursor;
+extern cairo_surface_t *surface;
+extern cairo_t *cr;
 
 typedef struct {
   PangoLayout *layout;
@@ -33,3 +41,4 @@ void Bullet(const char *);
 
 void Center12Point(const char *);
 
+#endif

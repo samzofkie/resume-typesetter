@@ -1,4 +1,3 @@
-#include <cairo-pdf.h>
 #include <pango/pangocairo.h>
 #include "resume.h"
 
@@ -39,12 +38,12 @@ void write_long_line(Text *t)
 }
 */
 
-static const double doc_width = 8.5*72,
-                    doc_height = 11*72,
-                    margin = 25;
-static double cursor = margin;
-static cairo_surface_t *surface;
-static cairo_t *cr;
+const double doc_width = 8.5*72,
+             doc_height = 11*72,
+             margin = 25;
+double cursor = margin;
+cairo_surface_t *surface;
+cairo_t *cr;
 
 
 TextLayout new_layout(const char *str, const char *font_str, int font_size) {
@@ -132,6 +131,8 @@ void SubSectionTitle(const char *str) {
 
 
 int index_of_next_space(const char *str, int end) {
+  if (end < 0 || end > strlen(str)-1)
+    return -1;
   while (--end != 0)
     if (str[end] == ' ')
       break;
@@ -165,38 +166,4 @@ void Bullet(const char *str) {
 
 void Center12Point(const char *str) {
   Render(str, "Cantarell", 12, &Center, 1, 2);
-}
-
-
-int main (int argc, char **argv) {
-  surface = cairo_pdf_surface_create("resume.pdf", doc_width, doc_height);
-  cr = cairo_create(surface);
-  cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-  cairo_paint(cr);
-  cairo_set_source_rgb(cr, 0, 0, 0);
-  cairo_set_line_width(cr, 0.5);
-
-  Title("Sam Zofkie");
-  Subtitle("samzofkie@gmail.com  •  github.com/samzofkie  •  samzofkie.com");
-  SectionTitle("Education");
-  SplitLine("Reed College, B.A. Computer Science", "2016-2020");
-  SectionTitle("Projects");
-  SubSectionTitle("Automated Linux From Scratch");
-  SubSectionTitle("Youtube Game");
-  Bullet("Whats up w all that shit that happens when that thing goes down u dont even know whatll happen when n all that shitll b crazy n shit will go nuts");
-  SubSectionTitle("X11 PulseAudio DAW");
-  SectionTitle("Skills");
-  Center12Point("Proficient: C, C++, JavaScript, React, Git, Unix");
-  Center12Point("Familiar: Python, Bash, Docker, SQL, AWS, HTML, CSS");
-  
-  /*
-  add("• Created web app to display randomly chosen YouTube videos using Flask and React.", Bullet);
-  add("• Designed gibberish search word algorithm and implemented crawler in Python to populate SQLite database with video URLs using Python.", Bullet);
-  add("• Researched and implemented JavaScript CSS technique to hide HTML iframes to improve UI responsiveness.", Bullet);
-  */
-
-  cairo_destroy(cr);
-  cairo_surface_destroy(surface); 
-
-  return 0;
 }
