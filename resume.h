@@ -35,7 +35,7 @@ void SectionTitle(const char *);
 void SplitLine(const char *, const char *);
 void SubSectionTitle(const char *);
 
-int index_of_next_space(const char *, int);
+int index_of_first_space(const char *);
 int longest_str_that_fits_in(char *, double);
 void Bullet(const char *);
 
