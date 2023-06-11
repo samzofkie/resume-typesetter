@@ -1,8 +1,6 @@
 #ifndef RESUME_H
 #define RESUME_H
 
-#include <pango/pangocairo.h>
-
 void init_cairo();
 void cleanup_cairo();
 
