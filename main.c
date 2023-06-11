@@ -1,17 +1,9 @@
-#include <cairo-pdf.h>
+//#include <cairo-pdf.h>
 #include "resume.h"
 
-//extern double doc_width, doc_height;
-//extern cairo_surface_t *surface;
-//extern cairo_t *cr;
 
-int main (int argc, char **argv) {
-  surface = cairo_pdf_surface_create("resume.pdf", doc_width, doc_height);
-  cr = cairo_create(surface);
-  cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-  cairo_paint(cr);
-  cairo_set_source_rgb(cr, 0, 0, 0);
-  cairo_set_line_width(cr, 0.5);
+int main (int argc, char **argv) { 
+  init_cairo();
 
   Title("Sam Zofkie");
   Subtitle("samzofkie@gmail.com  •  github.com/samzofkie  •  samzofkie.com");
@@ -32,8 +24,7 @@ int main (int argc, char **argv) {
   add("• Researched and implemented JavaScript CSS technique to hide HTML iframes to improve UI responsiveness.", Bullet);
   */
 
-  cairo_destroy(cr);
-  cairo_surface_destroy(surface); 
+  cleanup_cairo();
 
   return 0;
 }

@@ -1,4 +1,5 @@
 #include <pango/pangocairo.h>
+#include <cairo-pdf.h>
 #include "resume.h"
 
 // TODO
@@ -14,6 +15,25 @@ double cursor = margin;
 cairo_surface_t *surface;
 cairo_t *cr;
 
+void init_cairo() {
+  surface = cairo_pdf_surface_create("resume.pdf", doc_width, doc_height);
+  cr = cairo_create(surface);
+  cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+  cairo_paint(cr);
+  cairo_set_source_rgb(cr, 0, 0, 0);
+  cairo_set_line_width(cr, 0.5);
+}
+
+void cleanup_cairo() {
+  cairo_destroy(cr);
+  cairo_surface_destroy(surface);
+}
+
+
+typedef struct {
+  PangoLayout *layout;
+  double width, height;
+} TextLayout;
 
 TextLayout new_textlayout(const char *str, const char *font_str, int font_size) {
   PangoLayout *layout = pango_cairo_create_layout(cr);
@@ -82,13 +102,18 @@ int index_of_first_space(const char *str) {
   return i;  
 }
 
+int str_fits_in(const char *str, const char *font_str,
+                 int font_size, double width) {
+  return new_textlayout(str, font_str, font_size).width < width;
+}
+
 int length_longest_str_that_fits_in(char *str, double max_width) {
   /*
   int test_str_length = 0;
   char *test_str = (char*)malloc(strlen(str));
   memset(test_str, 0, strlen(str));
   while (test_str_length < strlen(str)) {
-    if (new_textlayout(test_str, "Cantarell", 9).width < max_width)
+    if (str_fits_in(test_str, "Cantarell", 9, max_width)
       break;
     test_str_length = index_of_first_space(str+test_str_length);
     strcpy(test_str, str, test_str_length);

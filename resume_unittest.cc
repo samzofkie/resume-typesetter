@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 extern "C" {
-  #include "resume.h"
+  #include "resume_unittest.h"
 }
 
 TEST(index_of_first_spaceTest, EmptyString) {
