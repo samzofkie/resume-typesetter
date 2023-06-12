@@ -3,10 +3,9 @@
 #include "resume.h"
 
 // TODO
-// * bullet function
 // * section meta function
 // * component function arr of functions
-
+// * links
 
 const double doc_width = 8.5*72,
              doc_height = 11*72,
@@ -128,14 +127,22 @@ int length_longest_str_that_fits(const char *str, double max_width) {
 }
 
 void Bullet(const char *sentence) {
-  // int str_start_index = 0, str_end_index;
-  // double max_width = doc_width - margin * 4;
-  // while (str_start_index < strlen(sentence)) {
-  //   str_end_index = length_longest_str_that_fits(str_start_index, max_width);
-  //   // Render from str_start_index to str_end_index
-  //   str_start_index = str_end_index;
-  // }
-  // // Draw bullet
+  TextLayout tl = new_textlayout("•", "Cantarell Bold", 9);
+  draw_and_free_layout(margin + margin - tl.width - 5, cursor, tl.layout);
+  
+  int i = 0, j = 0;
+  double max_width = doc_width - margin * 4;
+  char *slice;
+  while (i < strlen(sentence)) {
+    j += length_longest_str_that_fits(sentence + i, max_width);
+    slice = strdup(sentence);
+    slice[j] = 0;
+    if (slice[i] == ' ')
+      i++;
+    Render(slice + i, "Cantarell", 9, &Indent, 1, 2);
+    i = j;
+  }
+  free(slice);
 }
 
 void Center12Point(const char *str) { Render(str, "Cantarell", 12, &Center, 1, 2); }
