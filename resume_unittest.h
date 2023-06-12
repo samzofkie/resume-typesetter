@@ -1,6 +1,8 @@
 #ifndef RESUME_UNITTEST_H
 #define RESUME_UNITTEST_H
 
+extern const double doc_width, doc_height;
+
 void init_cairo();
 void cleanup_cairo();
 

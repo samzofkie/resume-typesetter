@@ -103,21 +103,28 @@ int index_of_first_space(const char *str) {
   return i;  
 }
 
-int check_str_fits_in(char *str, int str_len,
-                      const char *font_str, int font_size, double width) 
+int str_fits_in(const char *str, int str_len,
+                const char *font_str, int font_size, double width) 
 {
-  str[str_len] = '\0';
-  TextLayout test = new_textlayout(str, font_str, font_size);
-  int ans = test.width < width;
+  char *slice = strdup(str);
+  slice[str_len] = '\0';  
+  TextLayout test = new_textlayout(slice, font_str, font_size); 
+  free(slice);
   g_object_unref(test.layout);
-  return ans;
+  return test.width < width;
 }
 
 int length_longest_str_that_fits(const char *str, double max_width) {
-  /*  
-  char *slice = strdup(str);
-  free(slice);
-  */
+  int i = 0, prev; 
+  while (i < strlen(str)) {
+    i += index_of_first_space(str + i);
+    if(!str_fits_in(str, i, "Cantarell", 9, max_width))
+      return prev;
+    prev = i;
+    if (str[i] == ' ')
+      i++;
+  }
+  return i;
 }
 
 void Bullet(const char *sentence) {
