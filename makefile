@@ -1,4 +1,5 @@
 CFLAGS = -g -Wall -Wextra -Werror -std=gnu11
+CXXFLAGS = -g -Wall -Wextra -Werror
 
 all: write_resume test
 

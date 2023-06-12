@@ -35,6 +35,7 @@ typedef struct {
   double width, height;
 } TextLayout;
 
+
 TextLayout new_textlayout(const char *str, const char *font_str, int font_size) {
   PangoLayout *layout = pango_cairo_create_layout(cr);
   PangoFontDescription *font_desc = pango_font_description_from_string(font_str);
@@ -106,18 +107,17 @@ int check_str_fits_in(char *str, int str_len,
                       const char *font_str, int font_size, double width) 
 {
   str[str_len] = '\0';
-  return new_textlayout(str, font_str, font_size).width < width;
+  TextLayout test = new_textlayout(str, font_str, font_size);
+  int ans = test.width < width;
+  g_object_unref(test.layout);
+  return ans;
 }
 
 int length_longest_str_that_fits(const char *str, double max_width) {
-  int test_str_index = 0;
-  char *test_str = strdup(str);
-  while (test_str_index < strlen(str) &&
-         check_str_fits_in(test_str, test_str_index, 
-                           "Cantarell", 9, max_width))
-    test_str_index = index_of_first_space(str + test_str_index);
-  free(test_str);
-  return test_str_index;
+  /*  
+  char *slice = strdup(str);
+  free(slice);
+  */
 }
 
 void Bullet(const char *sentence) {

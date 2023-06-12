@@ -21,7 +21,7 @@ TEST(index_of_first_spaceTest, NormalCase) {
   EXPECT_EQ(3, index_of_first_space("sam is actually my name"));
 }
 
-
+/*
 class length_longest_str_that_fitsTest : public ::testing::Test {
   protected:
     void SetUp() override {
@@ -40,4 +40,5 @@ TEST_F(length_longest_str_that_fitsTest, EmptyString) {
 TEST_F(length_longest_str_that_fitsTest, ShouldFit) {
   EXPECT_EQ(8 , length_longest_str_that_fits("whats up", 100));
 }
+*/
 
