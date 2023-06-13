@@ -14,6 +14,7 @@ double cursor = margin;
 cairo_surface_t *surface;
 cairo_t *cr;
 
+
 void init_cairo() {
   surface = cairo_pdf_surface_create("resume.pdf", doc_width, doc_height);
   cr = cairo_create(surface);
@@ -22,6 +23,7 @@ void init_cairo() {
   cairo_set_source_rgb(cr, 0, 0, 0);
   cairo_set_line_width(cr, 0.5);
 }
+
 
 void cleanup_cairo() {
   cairo_destroy(cr);
@@ -102,6 +104,7 @@ int index_of_first_space(const char *str) {
   return i;  
 }
 
+
 int str_fits_in(const char *str, int str_len,
                 const char *font_str, int font_size, double width) 
 {
@@ -112,6 +115,7 @@ int str_fits_in(const char *str, int str_len,
   g_object_unref(test.layout);
   return test.width < width;
 }
+
 
 int length_longest_str_that_fits(const char *str, double max_width) {
   int i = 0, prev; 
@@ -125,6 +129,7 @@ int length_longest_str_that_fits(const char *str, double max_width) {
   }
   return i;
 }
+
 
 void Bullet(const char *sentence) {
   TextLayout tl = new_textlayout("•", "Cantarell Bold", 9);
@@ -145,4 +150,16 @@ void Bullet(const char *sentence) {
   free(slice);
 }
 
+
 void Center12Point(const char *str) { Render(str, "Cantarell", 12, &Center, 1, 2); }
+
+
+void Project(int nlines, ...) {
+  va_list valist;
+  va_start(valist, nlines);
+  SubSectionTitle(va_arg(valist, const char *));
+  for (int i=1; i<nlines; i++)
+    Bullet(va_arg(valist, const char *));
+  va_end(valist);
+}
+

@@ -10,6 +10,7 @@ void SectionTitle(const char *);
 void SplitLine(const char *, const char *);
 void SubSectionTitle(const char *);
 void Bullet(const char *);
+void Project(int, ...);
 void Center12Point(const char *);
 
 #endif
