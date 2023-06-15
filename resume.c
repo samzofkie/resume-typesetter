@@ -96,7 +96,10 @@ void SplitLine(const char *left, const char *right) {
   Render(right, "Cantarell", 12, &Right, 1, 2);
 }
 void SubSectionTitle(const char *str) { Render(str, "Cantarell Bold", 12, NULL, 0, 2); }
-
+void SplitSubSectionTitle(const char *left, const char *right) {
+  Render(left, "Cantarell Bold", 12, NULL, 0, -1);
+  Render(right, "Cantarell Bold", 12, &Right, 1, 2);
+};
 
 int index_of_first_space(const char *str) {
   int i = 0;
@@ -144,7 +147,7 @@ void Bullet(const char *sentence) {
     slice[j] = 0;
     if (slice[i] == ' ')
       i++;
-    Render(slice + i, "Cantarell", 9, &Indent, 1, 2);
+    Render(slice + i, "NotoSerif", 9, &Indent, 1, 2);
     i = j;
   }
   free(slice);
