@@ -73,11 +73,11 @@ void SectionLine(TextLayout l, double *x, double *y) {
 
 
 void Render(const char *str, 
-           const char *font_str, 
-           int font_size, 
-           void (*format_fns)(TextLayout, double*, double*),  
-           int num_fns,
-           double line_increment) {
+            const char *font_str, 
+            int font_size, 
+            void (*format_fns)(TextLayout, double*, double*),  
+            int num_fns,
+            double line_increment) {
   double x = margin, y = cursor;
   TextLayout tl = new_textlayout(str, font_str, font_size);
   if (num_fns) //for (int i=0; i<num_fns; i++)
@@ -88,18 +88,16 @@ void Render(const char *str,
 }
 
 
-void Title(const char *str) { Render(str, "Cantarell Bold", 26, &Center, 1, 15); }
+void Title(const char *str) { Render(str, "Cantarell Bold", 30, &Center, 1, 15); }
 void Subtitle(const char *str) { Render(str, "Cantarell", 12, &Center, 1, 15); }
-void SectionTitle(const char *str) { Render(str, "Cantarell Bold", 18, &SectionLine, 1, 2); }
+void SectionTitle(const char *str) { Render(str, "Cantarell Bold", 22, &SectionLine, 1, 2); }
 void SplitLine(const char *left, const char *right) {
   Render(left, "Cantarell", 12, NULL, 0, -1);
   Render(right, "Cantarell", 12, &Right, 1, 2);
 }
-void SubSectionTitle(const char *str) { Render(str, "Cantarell Bold", 12, NULL, 0, 2); }
-void SplitSubSectionTitle(const char *left, const char *right) {
-  Render(left, "Cantarell Bold", 12, NULL, 0, -1);
-  Render(right, "Cantarell Bold", 12, &Right, 1, 2);
-};
+void SubSectionTitle(const char *str) { Render(str, "Cantarell", 16, NULL, 0, 2); }
+void Center12Point(const char *str) { Render(str, "Cantarell", 12, &Center, 1, 2); }
+
 
 int index_of_first_space(const char *str) {
   int i = 0;
@@ -139,7 +137,7 @@ void Bullet(const char *sentence) {
   draw_and_free_layout(margin + margin - tl.width - 5, cursor, tl.layout);
   
   int i = 0, j = 0;
-  double max_width = doc_width - margin * 4;
+  double max_width = doc_width - margin * 3;
   char *slice;
   while (i < strlen(sentence)) {
     j += length_longest_str_that_fits(sentence + i, max_width);
@@ -147,21 +145,42 @@ void Bullet(const char *sentence) {
     slice[j] = 0;
     if (slice[i] == ' ')
       i++;
-    Render(slice + i, "NotoSerif", 9, &Indent, 1, 2);
+    Render(slice + i, "NotoSerif", 8, &Indent, 1, 0.1);
     i = j;
   }
   free(slice);
 }
 
 
-void Center12Point(const char *str) { Render(str, "Cantarell", 12, &Center, 1, 2); }
-
-
-void Project(int nlines, ...) {
+void Project(const char * title, int nlines, ...) {
+  SubSectionTitle(title);
   va_list valist;
   va_start(valist, nlines);
   SubSectionTitle(va_arg(valist, const char *));
   for (int i=1; i<nlines; i++)
+    Bullet(va_arg(valist, const char *));
+  va_end(valist);
+}
+
+void Job(const char *role, 
+         const char *company, 
+         const char *location,
+         const char *dates, 
+         int num_bullets, ...) {
+  SubSectionTitle(role);
+  Render(company, "Cantarell", 10, NULL, 0, 1);
+  
+  char *location_dates = (char *)malloc(strlen(location) + strlen(dates));
+  memset(location_dates, 0, strlen(location) + strlen(dates));
+  strcat(location_dates, location);
+  strcat(location_dates, "  •  ");
+  strcat(location_dates, dates);
+  Render(location_dates, "Cantarell", 10, NULL, 0, 2);
+  free(location_dates);
+  
+  va_list valist;
+  va_start(valist, num_bullets);
+  for (int i=0; i<num_bullets; i++)
     Bullet(va_arg(valist, const char *));
   va_end(valist);
 }

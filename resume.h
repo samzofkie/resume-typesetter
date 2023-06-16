@@ -9,8 +9,10 @@ void Subtitle(const char *);
 void SectionTitle(const char *);
 void SplitLine(const char *, const char *);
 void SubSectionTitle(const char *);
-void Bullet(const char *);
-void Project(int, ...);
 void Center12Point(const char *);
+void Bullet(const char *);
+
+void Project(const char *, int, ...);
+void Job(const char *, const char *, const char *, const char *, int, ...);
 
 #endif
