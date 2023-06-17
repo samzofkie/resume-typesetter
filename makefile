@@ -1,20 +1,15 @@
-CFLAGS = -g -Wall -Wextra -Werror -std=gnu11
-CXXFLAGS = -g -Wall -Wextra -Werror
+CFLAGS := -g -Wall -Wextra -Werror -std=gnu11 -Wno-unused-parameter `pkg-config --cflags pangocairo`
+CXXFLAGS := $(CXXFLAGS) `pkg-config --cflags gtest_main`
+LDLIBS := `pkg-config --libs pangocairo`
 
 all: write_resume test
 
 write_resume: main.o resume.o
-	gcc main.o resume.o `pkg-config --libs pangocairo` -o write_resume
-resume.o: resume.c
-	gcc `pkg-config --cflags pangocairo` -c resume.c
-main.o: main.c
-	gcc `pkg-config --cflags pangocairo` -c main.c
+	$(CC) $^ $(LDLIBS) -o $@
 
 test: resume_unittest.o resume.o
-	g++ `pkg-config --libs gtest_main pangocairo` -o test resume_unittest.o resume.o
-resume_unittest.o: resume_unittest.cc
-	g++ `pkg-config --cflags gtest_main pangocairo` -c resume_unittest.cc
+	$(CXX) $^ $(LDLIBS) `pkg-config --libs gtest_main` -o $@
 
 clean:
-	rm *.o
-	rm test write_resume
+	rm -f *.o
+	rm -f test write_resume
