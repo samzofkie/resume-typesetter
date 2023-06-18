@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <pango/pangocairo.h>
 #include <cairo-pdf.h>
 #include "resume.h"
@@ -119,10 +120,10 @@ int str_fits_in(const char *str, int str_len,
 
 
 int length_longest_str_that_fits(const char *str, double max_width) {
-  int i = 0, prev; 
+  size_t i = 0, prev; 
   while (i < strlen(str)) {
     i += index_of_first_space(str + i);
-    if(!str_fits_in(str, i, "Cantarell", 9, max_width))
+    if(!str_fits_in(str, i, "Cantarell", 10, max_width))
       return prev;
     prev = i;
     if (str[i] == ' ')
@@ -133,19 +134,21 @@ int length_longest_str_that_fits(const char *str, double max_width) {
 
 
 void Bullet(const char *sentence) {
-  TextLayout tl = new_textlayout("•", "Cantarell Bold", 9);
+  int font_size = 10;
+  TextLayout tl = new_textlayout("•", "Cantarell Bold", font_size); 
   draw_and_free_layout(margin + margin - tl.width - 5, cursor, tl.layout);
-  
-  int i = 0, j = 0;
+
+  size_t i = 0, j = 0;
   double max_width = doc_width - margin * 3;
   char *slice;
+
   while (i < strlen(sentence)) {
     j += length_longest_str_that_fits(sentence + i, max_width);
     slice = strdup(sentence);
     slice[j] = 0;
     if (slice[i] == ' ')
       i++;
-    Render(slice + i, "NotoSerif", 8, &Indent, 1, 0.1);
+    Render(slice + i, "Cantarell", font_size, &Indent, 1, 0.1);
     i = j;
   }
   free(slice);
@@ -153,7 +156,7 @@ void Bullet(const char *sentence) {
 
 
 void Project(const char * title, int nlines, ...) {
-  SubSectionTitle(title);
+  SectionTitle(title);
   va_list valist;
   va_start(valist, nlines);
   SubSectionTitle(va_arg(valist, const char *));
@@ -162,6 +165,20 @@ void Project(const char * title, int nlines, ...) {
   va_end(valist);
 }
 
+
+void write_location_date(const char *location, const char *date) {
+  const char *seperator = "  •  ";
+  int location_dates_len = strlen(location) + strlen(seperator) + strlen(dates) + 1;
+  char *location_dates = (char *)malloc(location_dates_len);
+  memset(location_dates, 0, strlen(location) + strlen(dates) + 1);
+  strcat(location_dates, location);
+  strcat(location_dates, seperator);
+  strcat(location_dates, dates);
+  Render(location_dates, "Cantarell", 10, NULL, 0, 2);
+  free(location_dates);
+}
+
+
 void Job(const char *role, 
          const char *company, 
          const char *location,
@@ -169,19 +186,12 @@ void Job(const char *role,
          int num_bullets, ...) {
   SubSectionTitle(role);
   Render(company, "Cantarell", 10, NULL, 0, 1);
-  
-  char *location_dates = (char *)malloc(strlen(location) + strlen(dates));
-  memset(location_dates, 0, strlen(location) + strlen(dates));
-  strcat(location_dates, location);
-  strcat(location_dates, "  •  ");
-  strcat(location_dates, dates);
-  Render(location_dates, "Cantarell", 10, NULL, 0, 2);
-  free(location_dates);
-  
+  write_location_date(location, date);
+   
   va_list valist;
   va_start(valist, num_bullets);
   for (int i=0; i<num_bullets; i++)
     Bullet(va_arg(valist, const char *));
-  va_end(valist);
+  va_end(valist); 
 }
 
