@@ -91,7 +91,7 @@ void Render(const char *str,
 
 void Title(const char *str) { Render(str, "Cantarell Bold", 30, &Center, 1, 15); }
 void Subtitle(const char *str) { Render(str, "Cantarell", 12, &Center, 1, 15); }
-void SectionTitle(const char *str) { Render(str, "Cantarell Bold", 22, &SectionLine, 1, 2); }
+void SectionTitle(const char *str) { Render(str, "Cantarell Bold", 18, &SectionLine, 1, 2); }
 void SplitLine(const char *left, const char *right) {
   Render(left, "Cantarell", 12, NULL, 0, -1);
   Render(right, "Cantarell", 12, &Right, 1, 2);
@@ -166,7 +166,7 @@ void Project(const char * title, int nlines, ...) {
 }
 
 
-void write_location_date(const char *location, const char *date) {
+void write_location_dates(const char *location, const char *dates) {
   const char *seperator = "  •  ";
   int location_dates_len = strlen(location) + strlen(seperator) + strlen(dates) + 1;
   char *location_dates = (char *)malloc(location_dates_len);
@@ -174,9 +174,27 @@ void write_location_date(const char *location, const char *date) {
   strcat(location_dates, location);
   strcat(location_dates, seperator);
   strcat(location_dates, dates);
-  Render(location_dates, "Cantarell", 10, NULL, 0, 2);
+  Render(location_dates, "Cantarell Bold", 10, NULL, 0, 2);
   free(location_dates);
 }
+
+
+void Experience(const char *role,
+                const char *institution,
+                const char *location,
+                const char *dates) {
+  double x = margin, y = cursor;
+  TextLayout role_tl = new_textlayout(role, "Cantarell", 16);
+  draw_and_free_layout(x, y, role_tl.layout);
+  
+  x += role_tl.width + 5;
+  TextLayout institution_tl = new_textlayout(institution, "Cantarell", 10);
+  y += role_tl.height - institution_tl.height - 1.5;
+  draw_and_free_layout(x, y, institution_tl.layout);
+  cursor += role_tl.height + 2;
+
+  write_location_dates(location, dates);
+} 
 
 
 void Job(const char *role, 
@@ -184,14 +202,20 @@ void Job(const char *role,
          const char *location,
          const char *dates, 
          int num_bullets, ...) {
-  SubSectionTitle(role);
-  Render(company, "Cantarell", 10, NULL, 0, 1);
-  write_location_date(location, date);
-   
+  Experience(role, company, location, dates); 
   va_list valist;
   va_start(valist, num_bullets);
   for (int i=0; i<num_bullets; i++)
     Bullet(va_arg(valist, const char *));
-  va_end(valist); 
+  va_end(valist);
+  cursor += 10; 
+}
+
+void BulletSection(int n_points, ...) {
+  va_list valist;
+  va_start(valist, n_points);
+  for (int i=0; i<n_points; i++)
+    Bullet(va_arg(valist, const char *));
+  va_end(valist);
 }
 

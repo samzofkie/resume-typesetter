@@ -1,6 +1,8 @@
 #ifndef RESUME_H
 #define RESUME_H
 
+extern double cursor;
+
 void init_cairo();
 void cleanup_cairo();
 
@@ -13,6 +15,8 @@ void Center12Point(const char *);
 void Bullet(const char *);
 
 void Project(const char *, int, ...);
+void Experience(const char *, const char *, const char *, const char *);
 void Job(const char *, const char *, const char *, const char *, int, ...);
+void BulletSection(int, ...);
 
 #endif
