@@ -1,4 +1,4 @@
-#include "ResumeTypesetter.h"
+#include "Typesetter.h"
 #include <iostream>
 #include <pango/pangocairo.h>
 #include <cairo-pdf.h>
@@ -31,16 +31,16 @@ Text::~Text() {
 	g_object_unref(layout);
 }
 
-ResumeTypesetter::ResumeTypesetter() {
+Typesetter::Typesetter() {
 	surface = cairo_pdf_surface_create("resume.pdf", DOC_WIDTH, DOC_HEIGHT);
 	cr = cairo_create(surface);
 }
 
-ResumeTypesetter::~ResumeTypesetter() {
+Typesetter::~Typesetter() {
 	cairo_destroy(cr);
 	cairo_surface_destroy(surface);
 }
 
-void ResumeTypesetter::doShit() {
+void Typesetter::doShit() {
 	std::cout << "this some shit" << std::endl;
 }

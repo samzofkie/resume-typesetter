@@ -1,7 +1,7 @@
-#include "ResumeTypesetter.h"
+#include "Typesetter.h"
 
 int main() {
-	ResumeTypesetter typesetter;
+	Typesetter typesetter;
 	Font font(12, "IBMPlexSans");
 	Text text(typesetter.cr, &font, "Hiya world"); 
 	typesetter.doShit();

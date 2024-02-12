@@ -18,10 +18,10 @@ class Text {
 		double width, height;
 };
 
-class ResumeTypesetter {
+class Typesetter {
 	public:
-		ResumeTypesetter();
-		~ResumeTypesetter();
+		Typesetter();
+		~Typesetter();
 		void doShit();
 		cairo_t *cr;
   private:
