@@ -18,11 +18,12 @@ PangoFontDescription *Font::get_description() {
 	return description;
 }
 
+DrawableText::DrawableText(cairo_t *cr, Font *font, const char *str) 
+	:cr(cr), font(font), str(str) {}
 
-
-Text::Text(cairo_t *cr, Font *font, const char *str) 
-	:cr(cr), str(str), layout(pango_cairo_create_layout(cr))
-{	
+UnwrappedText::UnwrappedText(cairo_t *cr, Font *font, const char *str)
+	:DrawableText(cr, font, str), layout(pango_cairo_create_layout(cr))
+{
 	pango_layout_set_text(layout, str, -1);
 	pango_layout_set_font_description(layout, font->get_description());
 
@@ -32,26 +33,36 @@ Text::Text(cairo_t *cr, Font *font, const char *str)
 	size.height = (double)_height / PANGO_SCALE;
 }
 
-Text::~Text() {
+UnwrappedText::~UnwrappedText() {
 	g_object_unref(layout);
 }
 
-Size Text::get_size() {
+Size UnwrappedText::get_size() {
 	return size;
 }
 
-void Text::draw(Point point) {
-	std::cout << point.x << ' ' << point.y << std::endl;
+void UnwrappedText::draw(Point point) {
+	cairo_move_to(cr, point.x, point.y);
+	pango_cairo_show_layout(cr, layout);
 }
 
-
-
-LineWrappedText::LineWrappedText(cairo_t *cr, Font *font, const char *str, 
+WrappedText::WrappedText(cairo_t *cr, Font *font, const char *str, 
 																 double max_width, double line_spacing)
-	:Text(cr, font, str), max_width(max_width), line_spacing(line_spacing) 
-{}
+	:DrawableText(cr, font, str), max_width(max_width), line_spacing(line_spacing) 
+{
+	// TODO: Break str up into a vector of UnwrappedText*
+	//       Calculate and define size
+}
 
+Size WrappedText::get_size() {
+	// TODO
+	return size;
+}
 
+void WrappedText::draw(Point point) {
+	cairo_move_to(cr, point.x, point.y);
+	// TODO
+}
 
 Typesetter::Typesetter() 
 	:surface(cairo_pdf_surface_create("resume.pdf", DOC_WIDTH, DOC_HEIGHT)),
@@ -60,7 +71,7 @@ Typesetter::Typesetter()
 	 large(new Font(18, font_name))
 {
 	Font font(10, "Arial");
-	LineWrappedText text(cr, &font, "hey there");
+	UnwrappedText text(cr, &font, "hey there");
 }
 
 Typesetter::~Typesetter() {
@@ -70,12 +81,3 @@ Typesetter::~Typesetter() {
 	cairo_destroy(cr);
 	cairo_surface_destroy(surface);
 }
-
-
-/*bool Typesetter::str_fits(const char *str, double width) {	
-	return Text(cr, small, str).get_size().width < width;
-}*/
-
-/*int longest_string_that_fits_in(const char *str, double width) {
-
-}*/

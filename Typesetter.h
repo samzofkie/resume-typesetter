@@ -4,7 +4,6 @@
 const double DOC_WIDTH = 8.5 * 72,
 				     DOC_HEIGHT = 11 * 72;
 
-
 class Font {
 	public:
 		Font(int, const char *font_str);
@@ -14,16 +13,13 @@ class Font {
 		PangoFontDescription *description;
 };
 
-
 struct Point {
 	double x, y;
 };
 
-
 struct Size {
 	double width, height;
 };
-
 
 class Drawable {
 	public:
@@ -31,34 +27,36 @@ class Drawable {
 		virtual void draw(Point) =0;
 };
 
-
-class Text : public Drawable {
+class DrawableText : public Drawable {
 	public:
-		Text(cairo_t*, Font*, const char *);
-		~Text();
+		DrawableText(cairo_t *, Font *, const char *);
+	protected:
+		cairo_t *cr;
+		Font *font;
+		const char *str;	
+};
 
+class UnwrappedText : public DrawableText {
+	public:
+		UnwrappedText(cairo_t *, Font *, const char *);
+		~UnwrappedText();
 		Size get_size();
 		void draw(Point);
 	private:
-		cairo_t *cr;
-		const char *str;
 		PangoLayout *layout;
 		Size size;
-
-		int index_of_first_space;
-		bool str_fits(const char *, double);
-		int length_of_longest_string_that_fits(const char *, double);
 };
 
-
-class LineWrappedText : public Text {
+class WrappedText : public DrawableText {
 	public:
-		LineWrappedText(cairo_t*, Font*, const char *, double max_width =DOC_WIDTH, 
-										double line_spacing =0);
+		WrappedText(cairo_t *, Font *, const char *, double max_width = DOC_WIDTH,
+							  double line_spacing = 0);
+		Size get_size();
+		void draw(Point);
 	private:
 		double max_width, line_spacing;
+		Size size;
 };
-
 
 class Typesetter {
 	public:
