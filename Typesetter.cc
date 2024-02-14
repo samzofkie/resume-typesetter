@@ -89,7 +89,7 @@ WrappedText::WrappedText(cairo_t *cr, Font *font, const char *str,
 		line[length] = '\0';
 		lines.push_back(new UnwrappedText(cr, font, line));
 		free(line);
-		i += length;
+		i += length + 1;
 	}
 
 	size.width = lines.size() > 1 ? max_width : lines[0]->get_size().width;
@@ -106,8 +106,11 @@ Size WrappedText::get_size() {
 }
 
 void WrappedText::draw(Point point) {
-	cairo_move_to(cr, point.x, point.y);
-	// TODO
+	Point cursor = point;
+	for (long unsigned int i=0; i<lines.size(); i++) {
+		lines[i]->draw(cursor);
+		cursor.y += lines[i]->get_size().height + line_spacing;
+	}
 }
 
 Typesetter::Typesetter() 
@@ -118,6 +121,7 @@ Typesetter::Typesetter()
 {
 	Font font(10, "Arial");
 	WrappedText text(cr, &font, "this is a very very very long line. my name is sam whats up. how is it that you are today. whats bracking. whats up. yea yea yea yea yea yea yea yea. coolio. this is a very very very long line. my name is sam whats up. how is it that you are today. whats bracking. whats up. yea yea yea yea yea yea yea yea. coolio.");
+	text.draw({0, 0});
 }
 
 Typesetter::~Typesetter() {
