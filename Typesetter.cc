@@ -3,6 +3,7 @@
 #include <vector>
 #include <pango/pangocairo.h>
 #include <cairo-pdf.h>
+using namespace std;
 
 Font::Font(int size, const char *font_str) 
 	:description(pango_font_description_from_string(font_str))
@@ -46,16 +47,61 @@ void UnwrappedText::draw(Point point) {
 	pango_cairo_show_layout(cr, layout);
 }
 
+int WrappedText::index_of_first_space(const char *str) {
+	int i = 0;
+	while (str[i] != ' ' && str[i] != 0) { 
+		i++;
+	}
+	return i;
+}
+
+int WrappedText::length_longest_string_that_fits(const char *str, 
+																						     double max_width) {
+	
+	size_t i = 0, prev = 0;
+	while (i < strlen(str)) {
+		i += index_of_first_space(str + i);
+		
+		char *slice = strdup(str);
+		slice[i] = '\0';
+		double prospective_width = UnwrappedText(cr, font, slice).get_size().width;
+		free(slice);
+
+		if (prospective_width > max_width) 
+			return prev;
+
+		prev = i;
+
+		if (str[i] == ' ')
+			i++;
+	}
+	return i;
+}
+
 WrappedText::WrappedText(cairo_t *cr, Font *font, const char *str, 
 																 double max_width, double line_spacing)
 	:DrawableText(cr, font, str), max_width(max_width), line_spacing(line_spacing) 
 {
-	// TODO: Break str up into a vector of UnwrappedText*
-	//       Calculate and define size
+	size_t i = 0;
+	while (i < strlen(str)) {
+		char *line = strdup(str + i);
+		int length = length_longest_string_that_fits(line, max_width);
+		line[length] = '\0';
+		lines.push_back(new UnwrappedText(cr, font, line));
+		free(line);
+		i += length;
+	}
+
+	size.width = lines.size() > 1 ? max_width : lines[0]->get_size().width;
+	size.height = (lines.size() + line_spacing) * lines.size();
+}
+
+WrappedText::~WrappedText() {
+	for (long unsigned int i=0; i<lines.size(); i++)
+		delete lines[i];
 }
 
 Size WrappedText::get_size() {
-	// TODO
 	return size;
 }
 
@@ -71,7 +117,7 @@ Typesetter::Typesetter()
 	 large(new Font(18, font_name))
 {
 	Font font(10, "Arial");
-	UnwrappedText text(cr, &font, "hey there");
+	WrappedText text(cr, &font, "this is a very very very long line. my name is sam whats up. how is it that you are today. whats bracking. whats up. yea yea yea yea yea yea yea yea. coolio. this is a very very very long line. my name is sam whats up. how is it that you are today. whats bracking. whats up. yea yea yea yea yea yea yea yea. coolio.");
 }
 
 Typesetter::~Typesetter() {

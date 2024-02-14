@@ -39,7 +39,7 @@ class DrawableText : public Drawable {
 class UnwrappedText : public DrawableText {
 	public:
 		UnwrappedText(cairo_t *, Font *, const char *);
-		~UnwrappedText();
+		virtual ~UnwrappedText();
 		Size get_size();
 		void draw(Point);
 	private:
@@ -51,11 +51,16 @@ class WrappedText : public DrawableText {
 	public:
 		WrappedText(cairo_t *, Font *, const char *, double max_width = DOC_WIDTH,
 							  double line_spacing = 0);
+		~WrappedText();
 		Size get_size();
 		void draw(Point);
 	private:
 		double max_width, line_spacing;
 		Size size;
+		std::vector<UnwrappedText*> lines;
+
+		int index_of_first_space(const char *);
+		int length_longest_string_that_fits(const char *, double);
 };
 
 class Typesetter {
