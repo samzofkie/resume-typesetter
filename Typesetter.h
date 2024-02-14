@@ -1,12 +1,14 @@
 #include <vector>
+#include <string>
 #include <pango/pangocairo.h>
+using namespace std;
 
 const double DOC_WIDTH = 8.5 * 72,
 				     DOC_HEIGHT = 11 * 72;
 
 class Font {
 	public:
-		Font(int, const char *font_str);
+		Font(int, string);
 		~Font();
 		PangoFontDescription *get_description();
 	private:	
@@ -29,16 +31,16 @@ class Drawable {
 
 class DrawableText : public Drawable {
 	public:
-		DrawableText(cairo_t *, Font *, const char *);
+		DrawableText(cairo_t *, Font *, string);
 	protected:
 		cairo_t *cr;
 		Font *font;
-		const char *str;	
+		string str;	
 };
 
 class UnwrappedText : public DrawableText {
 	public:
-		UnwrappedText(cairo_t *, Font *, const char *);
+		UnwrappedText(cairo_t *, Font *, string);
 		virtual ~UnwrappedText();
 		Size get_size();
 		void draw(Point);
@@ -49,7 +51,7 @@ class UnwrappedText : public DrawableText {
 
 class WrappedText : public DrawableText {
 	public:
-		WrappedText(cairo_t *, Font *, const char *, double max_width = DOC_WIDTH,
+		WrappedText(cairo_t *, Font *, string, double max_width = DOC_WIDTH,
 							  double line_spacing = 0);
 		~WrappedText();
 		Size get_size();
@@ -59,8 +61,8 @@ class WrappedText : public DrawableText {
 		Size size;
 		std::vector<UnwrappedText*> lines;
 
-		int index_of_first_space(const char *);
-		int length_longest_string_that_fits(const char *, double);
+		string longest_substring_that_fits(string);
+		string rest_of_string(string, size_t);
 };
 
 class Typesetter {
@@ -72,7 +74,6 @@ class Typesetter {
 		const double MARGIN = 25;
 		cairo_surface_t *surface;
 		cairo_t *cr;
-		const char *font_name;
+		string font_name;
 		Font *small, *medium, *large;
-		bool str_fits(const char *, double);
 };

@@ -1,12 +1,13 @@
 #include "Typesetter.h"
 #include <iostream>
 #include <vector>
+#include <string>
 #include <pango/pangocairo.h>
 #include <cairo-pdf.h>
 using namespace std;
 
-Font::Font(int size, const char *font_str) 
-	:description(pango_font_description_from_string(font_str))
+Font::Font(int size, string font_str) 
+	:description(pango_font_description_from_string(font_str.c_str()))
 {
 	pango_font_description_set_size(description, size * PANGO_SCALE);	
 }
@@ -19,13 +20,13 @@ PangoFontDescription *Font::get_description() {
 	return description;
 }
 
-DrawableText::DrawableText(cairo_t *cr, Font *font, const char *str) 
+DrawableText::DrawableText(cairo_t *cr, Font *font, string str) 
 	:cr(cr), font(font), str(str) {}
 
-UnwrappedText::UnwrappedText(cairo_t *cr, Font *font, const char *str)
+UnwrappedText::UnwrappedText(cairo_t *cr, Font *font, string str)
 	:DrawableText(cr, font, str), layout(pango_cairo_create_layout(cr))
 {
-	pango_layout_set_text(layout, str, -1);
+	pango_layout_set_text(layout, str.c_str(), -1);
 	pango_layout_set_font_description(layout, font->get_description());
 
 	int _width, _height;
@@ -47,50 +48,36 @@ void UnwrappedText::draw(Point point) {
 	pango_cairo_show_layout(cr, layout);
 }
 
-int WrappedText::index_of_first_space(const char *str) {
-	int i = 0;
-	while (str[i] != ' ' && str[i] != 0) { 
-		i++;
-	}
-	return i;
-}
-
-int WrappedText::length_longest_string_that_fits(const char *str, 
-																						     double max_width) {
+string WrappedText::longest_substring_that_fits(string str) {
+	size_t substr_length = 0, prev_length= 0;
+	string substr = str.substr(0, substr_length);
 	
-	size_t i = 0, prev = 0;
-	while (i < strlen(str)) {
-		i += index_of_first_space(str + i);
-		
-		char *slice = strdup(str);
-		slice[i] = '\0';
-		double prospective_width = UnwrappedText(cr, font, slice).get_size().width;
-		free(slice);
-
-		if (prospective_width > max_width) 
-			return prev;
-
-		prev = i;
-
-		if (str[i] == ' ')
-			i++;
-	}
-	return i;
+	while (UnwrappedText(cr, font, substr).get_size().width < max_width) {
+		prev_length = substr_length;
+		substr_length = str.find(' ', substr_length + 1);
+		substr = str.substr(0, substr_length);
+	};
+	
+	return str.substr(0, prev_length);
 }
 
-WrappedText::WrappedText(cairo_t *cr, Font *font, const char *str, 
+string WrappedText::rest_of_string(string str, size_t start) {
+	return str.substr(start, str.size() - start);
+}
+
+WrappedText::WrappedText(cairo_t *cr, Font *font, string str, 
 																 double max_width, double line_spacing)
 	:DrawableText(cr, font, str), max_width(max_width), line_spacing(line_spacing) 
 {
-	size_t i = 0;
-	while (i < strlen(str)) {
-		char *line = strdup(str + i);
-		int length = length_longest_string_that_fits(line, max_width);
-		line[length] = '\0';
+
+	string _str = str, line;
+
+	while (UnwrappedText(cr, font, _str).get_size().width > max_width) {
+		line = longest_substring_that_fits(_str);
 		lines.push_back(new UnwrappedText(cr, font, line));
-		free(line);
-		i += length + 1;
+		_str = rest_of_string(_str, line.size() + 1);
 	}
+	lines.push_back(new UnwrappedText(cr, font, _str));
 
 	size.width = lines.size() > 1 ? max_width : lines[0]->get_size().width;
 	size.height = (lines.size() + line_spacing) * lines.size();
