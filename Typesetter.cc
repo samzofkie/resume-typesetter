@@ -101,8 +101,8 @@ void WrappedText::draw(Point point) {
 	}
 }
 
-Document::Document(string name) :name(name), 
-	surface(cairo_pdf_surface_create(name.c_str(), DOC_WIDTH, DOC_HEIGHT)),
+Document::Document(string name, Size size) :name(name), size(size),
+	surface(cairo_pdf_surface_create(name.c_str(), size.width, size.height)),
 	 cr(cairo_create(surface)) {}
 
 Document::~Document() {
@@ -110,9 +110,15 @@ Document::~Document() {
 	cairo_surface_destroy(surface);
 }
 
-Typesetter::Typesetter(Document *document) :document(document) {}
+Size Document::get_size() {
+	return size;
+}
 
-ResumeTypesetter::ResumeTypesetter(Document *document) :Typesetter(document) {
+Typesetter::Typesetter(Document *document) 
+	:document(document), cr(document->cr) {}
+
+ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info) 
+	:Typesetter(document), info(info) {
 	string main_font = "IBMPlexSans";
 	string bold_font = main_font + " Bold";
 	string italic_font = main_font + " Italic";
@@ -121,14 +127,62 @@ ResumeTypesetter::ResumeTypesetter(Document *document) :Typesetter(document) {
 
 	fonts["small"] = new Font(small, main_font);
 	fonts["section"] = new Font(medium, bold_font);
-	fonts["title"] = new Font(large, bold_font);
-}
+	fonts["name"] = new Font(large, bold_font);
 
-void ResumeTypesetter::write() {
-
+	margin = 25;
+	
+	header = new ResumeHeader(*this, document->get_size().width - (margin * 2));
 }
 
 ResumeTypesetter::~ResumeTypesetter() {
 	for(map<string,Font*>::iterator i = fonts.begin(); i!=fonts.end(); i++)
 		delete i->second;
+	delete header;
+}
+
+void ResumeTypesetter::write() {
+	header->draw({margin, margin});
+}
+
+ResumeTypesetter::ResumeHeader::ResumeHeader(ResumeTypesetter &typesetter,
+																						 double max_width) 
+	:typesetter(typesetter) 
+{
+	size.width = max_width;
+	size.height = 0;
+	for (size_t i = 0; i < typesetter.info.links.size(); i++) {
+		UnwrappedText *p = new UnwrappedText(typesetter.cr, 
+																			typesetter.fonts["small"], 
+																			typesetter.info.links[i]);
+		size.height += p->get_size().height;
+		links.push_back(p);
+	}
+	name = new UnwrappedText(typesetter.cr, typesetter.fonts["name"], 
+													 typesetter.info.name);
+}
+
+ResumeTypesetter::ResumeHeader::~ResumeHeader() {
+	for (size_t i = 0; i < links.size(); i++)
+		delete links[i];
+	delete name;
+}
+
+Size ResumeTypesetter::ResumeHeader::get_size() {
+	return size;
+}
+
+void ResumeTypesetter::ResumeHeader::draw(Point point) {
+	Point cursor = point;
+
+	for (size_t i=0; i < links.size(); i++) {
+		cursor.x += (size.width - links[i]->get_size().width);
+		links[i]->draw(cursor);
+		cursor.x = point.x;
+		cursor.y += links[i]->get_size().height;
+	}
+	
+	cursor.y -= name->get_size().height;
+	cursor.x = point.x;
+	name->draw(cursor);
+
 }

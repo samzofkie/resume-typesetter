@@ -4,9 +4,6 @@
 #include <pango/pangocairo.h>
 using namespace std;
 
-const double DOC_WIDTH = 8.5 * 72,
-				     DOC_HEIGHT = 11 * 72;
-
 class Font {
 	public:
 		Font(int, string);
@@ -52,7 +49,7 @@ class UnwrappedText : public DrawableText {
 
 class WrappedText : public DrawableText {
 	public:
-		WrappedText(cairo_t *, Font *, string, double max_width = DOC_WIDTH,
+		WrappedText(cairo_t *, Font *, string, double max_width,
 							  double line_spacing = 0);
 		~WrappedText();
 		Size get_size();
@@ -68,10 +65,12 @@ class WrappedText : public DrawableText {
 
 class Document {
 	public:
-		Document(string);
+		Document(string, Size size = {8.5 * 72, 11 * 72});
 		~Document();
+		Size get_size();
 	private:
 		string name;
+		Size size;
 		cairo_surface_t *surface;
 	public:
 		cairo_t *cr;
@@ -84,15 +83,35 @@ class Typesetter {
 	
 	protected:
 		Document *document;
+		cairo_t *cr;
+};
+
+struct ResumeInfo {
+	string name;
+	vector<string> links;
 };
 
 class ResumeTypesetter : public Typesetter {
 	public:
-		ResumeTypesetter(Document *);
+		ResumeTypesetter(Document *, ResumeInfo);
 		~ResumeTypesetter();
 		void write();
 	private:
-		Document *document;
+		
+		class ResumeHeader : public Drawable {
+			public:
+				ResumeHeader(ResumeTypesetter&, double);
+				virtual ~ResumeHeader();
+				Size get_size();
+				void draw(Point);
+			private:
+				ResumeTypesetter& typesetter;
+				UnwrappedText *name;
+				vector<UnwrappedText*> links;
+				Size size;
+		};
+		ResumeInfo info;
 		map<string,Font*> fonts;
-
+		double margin;
+		ResumeHeader *header;
 };
