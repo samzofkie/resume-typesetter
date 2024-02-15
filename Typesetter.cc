@@ -53,7 +53,7 @@ string WrappedText::longest_substring_that_fits(string str) {
 	size_t substr_length = 0, prev_length= 0;
 	string substr = str.substr(0, substr_length);
 	
-	while (UnwrappedText(cr, font, substr).get_size().width < max_width) {
+	while (UnwrappedText(cr, font, substr).width() < max_width) {
 		prev_length = substr_length;
 		substr_length = str.find(' ', substr_length + 1);
 		substr = str.substr(0, substr_length);
@@ -73,14 +73,14 @@ WrappedText::WrappedText(cairo_t *cr, Font *font, string str,
 
 	string _str = str, line;
 
-	while (UnwrappedText(cr, font, _str).get_size().width > max_width) {
+	while (UnwrappedText(cr, font, _str).width() > max_width) {
 		line = longest_substring_that_fits(_str);
 		lines.push_back(new UnwrappedText(cr, font, line));
 		_str = rest_of_string(_str, line.size() + 1);
 	}
 	lines.push_back(new UnwrappedText(cr, font, _str));
 
-	size.width = lines.size() > 1 ? max_width : lines[0]->get_size().width;
+	size.width = lines.size() > 1 ? max_width : lines[0]->width();
 	size.height = (lines.size() + line_spacing) * lines.size();
 }
 
@@ -93,14 +93,15 @@ void WrappedText::draw(Point point) {
 	Point cursor = point;
 	for (long unsigned int i=0; i<lines.size(); i++) {
 		lines[i]->draw(cursor);
-		cursor.y += lines[i]->get_size().height + line_spacing;
+		cursor.y += lines[i]->height() + line_spacing;
 	}
 }
 
-Document::Document(string name, Size size) :Sized(), name(name),
-	surface(cairo_pdf_surface_create(name.c_str(), size.width, size.height)),
-	 cr(cairo_create(surface)) {
-	size = size;
+Document::Document(string name, Size _size) :name(name),
+	surface(cairo_pdf_surface_create(name.c_str(), _size.width, _size.height)),
+	 cr(cairo_create(surface)) 
+{
+	size = _size;
 }
 
 Document::~Document() {
@@ -125,33 +126,25 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 
 	margin = 25;
 	
-	//header = new ResumeHeader(*this, document->get_size().width - (margin * 2));
+	header = new ResumeHeader(*this, document->width() - (margin * 2));
 }
 
 ResumeTypesetter::~ResumeTypesetter() {
 	for(map<string,Font*>::iterator i = fonts.begin(); i!=fonts.end(); i++)
 		delete i->second;
-	//delete header;
+	delete header;
 }
 
 void ResumeTypesetter::write() {
-	//header->draw({margin, margin});
+	header->draw({margin, margin});
 }
 
-ResumeTypesetter::ResumeElement::ResumeElement(ResumeTypesetter &typesetter,
-																						   double max_width)
-	:typesetter(typesetter)
-{
-	size = {max_width, 0};
-}
+ResumeTypesetter::ResumeElement::ResumeElement(ResumeTypesetter &typesetter)
+	:typesetter(typesetter) {}
 
-Size ResumeTypesetter::ResumeElement::get_size() {
-	return size;
-}
-
-/*ResumeTypesetter::ResumeHeader::ResumeHeader(ResumeTypesetter &typesetter,
+ResumeTypesetter::ResumeHeader::ResumeHeader(ResumeTypesetter &typesetter,
 																						 double max_width) 
-	:typesetter(typesetter) 
+	:ResumeElement(typesetter) 
 {
 	size.width = max_width;
 	size.height = 0;
@@ -159,7 +152,7 @@ Size ResumeTypesetter::ResumeElement::get_size() {
 		UnwrappedText *p = new UnwrappedText(typesetter.cr, 
 																			typesetter.fonts["small"], 
 																			typesetter.info.links[i]);
-		size.height += p->get_size().height;
+		size.height += p->height();
 		links.push_back(p);
 	}
 	name = new UnwrappedText(typesetter.cr, typesetter.fonts["name"], 
@@ -170,24 +163,19 @@ ResumeTypesetter::ResumeHeader::~ResumeHeader() {
 	for (size_t i = 0; i < links.size(); i++)
 		delete links[i];
 	delete name;
-}*/
+}
 
-/*Size ResumeTypesetter::ResumeHeader::get_size() {
-	return size;
-}*/
-
-/*void ResumeTypesetter::ResumeHeader::draw(Point point) {
+void ResumeTypesetter::ResumeHeader::draw(Point point) {
 	Point cursor = point;
 
 	for (size_t i=0; i < links.size(); i++) {
-		cursor.x += (size.width - links[i]->get_size().width);
+		cursor.x += (size.width - links[i]->width());
 		links[i]->draw(cursor);
 		cursor.x = point.x;
-		cursor.y += links[i]->get_size().height;
+		cursor.y += links[i]->height();
 	}
 	
-	cursor.y -= name->get_size().height;
+	cursor.y -= name->height();
 	cursor.x = point.x;
 	name->draw(cursor);
-
-}*/
+}

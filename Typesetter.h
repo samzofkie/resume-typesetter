@@ -101,25 +101,20 @@ class ResumeTypesetter : public Typesetter {
 	private:
 		class ResumeElement : public Drawable {
 			public:
-				ResumeElement(ResumeTypesetter&, double);
-				Size get_size();
+				ResumeElement(ResumeTypesetter&);
 			private:
 				ResumeTypesetter& typesetter;
-				Size size;
 		};
 		
-		/*class ResumeHeader : public ResumeElement {
+		class ResumeHeader : public ResumeElement {
 			public:
 				ResumeHeader(ResumeTypesetter&, double);
 				virtual ~ResumeHeader();
-				//Size get_size();
 				void draw(Point);
 			private:
-				ResumeTypesetter& typesetter;
 				UnwrappedText *name;
 				vector<UnwrappedText*> links;
-				Size size;
-		};*/
+		};
 
 		/*class ResumeSection : public Drawable {
 			public ResumeSection(ResumeTypesetter&, do
@@ -128,5 +123,5 @@ class ResumeTypesetter : public Typesetter {
 		ResumeInfo info;
 		map<string,Font*> fonts;
 		double margin;
-		//ResumeHeader *header;
+		ResumeHeader *header;
 };
