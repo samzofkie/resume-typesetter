@@ -2,7 +2,7 @@
 #include "Typesetter.h"
 
 int main() {
-	Document *resume = new Document("sam_zofkie_resume.pdf");
+	Document *resume = new Document("resume.pdf");
 	ResumeInfo info;
 	info.name = "My Name";
 	info.links = {"myemail@email.com", "website.com/myname", "myname.com"};

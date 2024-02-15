@@ -21,10 +21,18 @@ struct Size {
 	double width, height;
 };
 
-class Drawable {
+class Sized {
 	public:
-		virtual Size get_size() =0;
-		virtual void draw(Point) =0;
+		virtual Size get_size();
+		virtual double width();
+		virtual double height();
+	protected:
+		Size size;
+};
+
+class Drawable : public Sized {
+	public:
+		virtual void draw(Point) = 0;
 };
 
 class DrawableText : public Drawable {
@@ -40,11 +48,9 @@ class UnwrappedText : public DrawableText {
 	public:
 		UnwrappedText(cairo_t *, Font *, string);
 		virtual ~UnwrappedText();
-		Size get_size();
 		void draw(Point);
 	private:
 		PangoLayout *layout;
-		Size size;
 };
 
 class WrappedText : public DrawableText {
@@ -52,25 +58,21 @@ class WrappedText : public DrawableText {
 		WrappedText(cairo_t *, Font *, string, double max_width,
 							  double line_spacing = 0);
 		~WrappedText();
-		Size get_size();
 		void draw(Point);
 	private:
 		double max_width, line_spacing;
-		Size size;
 		std::vector<UnwrappedText*> lines;
 
 		string longest_substring_that_fits(string);
 		string rest_of_string(string, size_t);
 };
 
-class Document {
+class Document : public Sized {
 	public:
 		Document(string, Size size = {8.5 * 72, 11 * 72});
-		~Document();
-		Size get_size();
+		virtual ~Document();
 	private:
 		string name;
-		Size size;
 		cairo_surface_t *surface;
 	public:
 		cairo_t *cr;
@@ -97,21 +99,34 @@ class ResumeTypesetter : public Typesetter {
 		~ResumeTypesetter();
 		void write();
 	private:
+		class ResumeElement : public Drawable {
+			public:
+				ResumeElement(ResumeTypesetter&, double);
+				Size get_size();
+			private:
+				ResumeTypesetter& typesetter;
+				Size size;
+		};
 		
-		class ResumeHeader : public Drawable {
+		/*class ResumeHeader : public ResumeElement {
 			public:
 				ResumeHeader(ResumeTypesetter&, double);
 				virtual ~ResumeHeader();
-				Size get_size();
+				//Size get_size();
 				void draw(Point);
 			private:
 				ResumeTypesetter& typesetter;
 				UnwrappedText *name;
 				vector<UnwrappedText*> links;
 				Size size;
-		};
+		};*/
+
+		/*class ResumeSection : public Drawable {
+			public ResumeSection(ResumeTypesetter&, do
+		};*/
+
 		ResumeInfo info;
 		map<string,Font*> fonts;
 		double margin;
-		ResumeHeader *header;
+		//ResumeHeader *header;
 };

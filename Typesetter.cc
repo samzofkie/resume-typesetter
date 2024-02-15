@@ -21,6 +21,10 @@ PangoFontDescription *Font::get_description() {
 	return description;
 }
 
+Size Sized::get_size() { return size; }
+double Sized::width() { return size.width; }
+double Sized::height() { return size.height; }
+
 DrawableText::DrawableText(cairo_t *cr, Font *font, string str) 
 	:cr(cr), font(font), str(str) {}
 
@@ -38,10 +42,6 @@ UnwrappedText::UnwrappedText(cairo_t *cr, Font *font, string str)
 
 UnwrappedText::~UnwrappedText() {
 	g_object_unref(layout);
-}
-
-Size UnwrappedText::get_size() {
-	return size;
 }
 
 void UnwrappedText::draw(Point point) {
@@ -89,10 +89,6 @@ WrappedText::~WrappedText() {
 		delete lines[i];
 }
 
-Size WrappedText::get_size() {
-	return size;
-}
-
 void WrappedText::draw(Point point) {
 	Point cursor = point;
 	for (long unsigned int i=0; i<lines.size(); i++) {
@@ -101,17 +97,15 @@ void WrappedText::draw(Point point) {
 	}
 }
 
-Document::Document(string name, Size size) :name(name), size(size),
+Document::Document(string name, Size size) :Sized(), name(name),
 	surface(cairo_pdf_surface_create(name.c_str(), size.width, size.height)),
-	 cr(cairo_create(surface)) {}
+	 cr(cairo_create(surface)) {
+	size = size;
+}
 
 Document::~Document() {
 	cairo_destroy(cr);
 	cairo_surface_destroy(surface);
-}
-
-Size Document::get_size() {
-	return size;
 }
 
 Typesetter::Typesetter(Document *document) 
@@ -131,20 +125,31 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 
 	margin = 25;
 	
-	header = new ResumeHeader(*this, document->get_size().width - (margin * 2));
+	//header = new ResumeHeader(*this, document->get_size().width - (margin * 2));
 }
 
 ResumeTypesetter::~ResumeTypesetter() {
 	for(map<string,Font*>::iterator i = fonts.begin(); i!=fonts.end(); i++)
 		delete i->second;
-	delete header;
+	//delete header;
 }
 
 void ResumeTypesetter::write() {
-	header->draw({margin, margin});
+	//header->draw({margin, margin});
 }
 
-ResumeTypesetter::ResumeHeader::ResumeHeader(ResumeTypesetter &typesetter,
+ResumeTypesetter::ResumeElement::ResumeElement(ResumeTypesetter &typesetter,
+																						   double max_width)
+	:typesetter(typesetter)
+{
+	size = {max_width, 0};
+}
+
+Size ResumeTypesetter::ResumeElement::get_size() {
+	return size;
+}
+
+/*ResumeTypesetter::ResumeHeader::ResumeHeader(ResumeTypesetter &typesetter,
 																						 double max_width) 
 	:typesetter(typesetter) 
 {
@@ -165,13 +170,13 @@ ResumeTypesetter::ResumeHeader::~ResumeHeader() {
 	for (size_t i = 0; i < links.size(); i++)
 		delete links[i];
 	delete name;
-}
+}*/
 
-Size ResumeTypesetter::ResumeHeader::get_size() {
+/*Size ResumeTypesetter::ResumeHeader::get_size() {
 	return size;
-}
+}*/
 
-void ResumeTypesetter::ResumeHeader::draw(Point point) {
+/*void ResumeTypesetter::ResumeHeader::draw(Point point) {
 	Point cursor = point;
 
 	for (size_t i=0; i < links.size(); i++) {
@@ -185,4 +190,4 @@ void ResumeTypesetter::ResumeHeader::draw(Point point) {
 	cursor.x = point.x;
 	name->draw(cursor);
 
-}
+}*/
