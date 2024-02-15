@@ -91,6 +91,7 @@ class Typesetter {
 struct ResumeInfo {
 	string name;
 	vector<string> links;
+	string school, degree, school_date;
 };
 
 class ResumeTypesetter : public Typesetter {
@@ -102,7 +103,7 @@ class ResumeTypesetter : public Typesetter {
 		class ResumeElement : public Drawable {
 			public:
 				ResumeElement(ResumeTypesetter&);
-			private:
+			protected:
 				ResumeTypesetter& typesetter;
 		};
 		
@@ -116,12 +117,18 @@ class ResumeTypesetter : public Typesetter {
 				vector<UnwrappedText*> links;
 		};
 
-		/*class ResumeSection : public Drawable {
-			public ResumeSection(ResumeTypesetter&, do
-		};*/
+		class ResumeSection : public ResumeElement {
+			public:
+				ResumeSection(ResumeTypesetter&, double, string);
+				virtual ~ResumeSection();
+				void draw(Point);
+			private:
+				UnwrappedText *title;
+		};
 
 		ResumeInfo info;
 		map<string,Font*> fonts;
-		double margin;
+		double margin, padding;
 		ResumeHeader *header;
+		ResumeSection *education;
 };

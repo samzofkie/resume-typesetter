@@ -102,6 +102,7 @@ Document::Document(string name, Size _size) :name(name),
 	 cr(cairo_create(surface)) 
 {
 	size = _size;
+	cairo_set_line_width(cr, 0.5);
 }
 
 Document::~Document() {
@@ -125,18 +126,26 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 	fonts["name"] = new Font(large, bold_font);
 
 	margin = 25;
+	padding = 10;
 	
-	header = new ResumeHeader(*this, document->width() - (margin * 2));
+	double full_element_width = document->width() - (margin * 2);
+
+	header = new ResumeHeader(*this, full_element_width);
+	education = new ResumeSection(*this, full_element_width, "Education");
 }
 
 ResumeTypesetter::~ResumeTypesetter() {
 	for(map<string,Font*>::iterator i = fonts.begin(); i!=fonts.end(); i++)
 		delete i->second;
 	delete header;
+	delete education;
 }
 
 void ResumeTypesetter::write() {
-	header->draw({margin, margin});
+	Point cursor {margin, margin};
+	header->draw(cursor);
+	cursor.y += header->height() + padding;
+	education->draw(cursor);
 }
 
 ResumeTypesetter::ResumeElement::ResumeElement(ResumeTypesetter &typesetter)
@@ -178,4 +187,32 @@ void ResumeTypesetter::ResumeHeader::draw(Point point) {
 	cursor.y -= name->height();
 	cursor.x = point.x;
 	name->draw(cursor);
+}
+
+ResumeTypesetter::ResumeSection::ResumeSection(
+	ResumeTypesetter &typesetter, double max_width, string name) 
+	:ResumeElement(typesetter)
+{
+	size.width = max_width;
+	title = new UnwrappedText(typesetter.cr, typesetter.fonts["section"], name);
+	size.height = title->height();
+}
+
+ResumeTypesetter::ResumeSection::~ResumeSection() {
+	delete title;
+}
+
+void ResumeTypesetter::ResumeSection::draw(Point point) {
+	Point cursor = point;
+	title->draw(cursor);
+
+	double xpadding = 3, ypadding = 2;
+
+	cursor.x = point.x + title->width() + xpadding;
+	cursor.y = point.y + ypadding + title->height() / 2;
+	cairo_move_to(typesetter.cr, cursor.x, cursor.y);
+
+	cursor.x = point.x + size.width;
+	cairo_line_to(typesetter.cr, cursor.x, cursor.y);
+	cairo_stroke(typesetter.cr);
 }
