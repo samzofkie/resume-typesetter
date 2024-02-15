@@ -2,6 +2,8 @@
 #include "Typesetter.h"
 
 int main() {
-	Typesetter typesetter;	
+	Document *resume = new Document("sam_zofkie_resume.pdf");
+	ResumeTypesetter typesetter(resume);
+	delete resume;
 	return 0;
 }

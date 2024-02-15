@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <map>
 #include <pango/pangocairo.h>
 using namespace std;
 
@@ -65,15 +66,33 @@ class WrappedText : public DrawableText {
 		string rest_of_string(string, size_t);
 };
 
+class Document {
+	public:
+		Document(string);
+		~Document();
+	private:
+		string name;
+		cairo_surface_t *surface;
+	public:
+		cairo_t *cr;
+};
+
 class Typesetter {
 	public:
-		Typesetter();
-		~Typesetter();
- 
+		Typesetter(Document *);
+		virtual void write() = 0;
+	
+	protected:
+		Document *document;
+};
+
+class ResumeTypesetter : public Typesetter {
+	public:
+		ResumeTypesetter(Document *);
+		~ResumeTypesetter();
+		void write();
 	private:
-		const double MARGIN = 25;
-		cairo_surface_t *surface;
-		cairo_t *cr;
-		string font_name;
-		Font *small, *medium, *large;
+		Document *document;
+		map<string,Font*> fonts;
+
 };

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <map>
 #include <pango/pangocairo.h>
 #include <cairo-pdf.h>
 using namespace std;
@@ -100,21 +101,34 @@ void WrappedText::draw(Point point) {
 	}
 }
 
-Typesetter::Typesetter() 
-	:surface(cairo_pdf_surface_create("resume.pdf", DOC_WIDTH, DOC_HEIGHT)),
-	 cr(cairo_create(surface)), font_name("IBMPlexSans"),
-	 small(new Font(10, font_name)), medium(new Font(14, font_name)),
-	 large(new Font(18, font_name))
-{
-	Font font(10, "Arial");
-	WrappedText text(cr, &font, "this is a very very very long line. my name is sam whats up. how is it that you are today. whats bracking. whats up. yea yea yea yea yea yea yea yea. coolio. this is a very very very long line. my name is sam whats up. how is it that you are today. whats bracking. whats up. yea yea yea yea yea yea yea yea. coolio.");
-	text.draw({0, 0});
-}
+Document::Document(string name) :name(name), 
+	surface(cairo_pdf_surface_create(name.c_str(), DOC_WIDTH, DOC_HEIGHT)),
+	 cr(cairo_create(surface)) {}
 
-Typesetter::~Typesetter() {
-	delete small;
-	delete medium;
-	delete large;
+Document::~Document() {
 	cairo_destroy(cr);
 	cairo_surface_destroy(surface);
+}
+
+Typesetter::Typesetter(Document *document) :document(document) {}
+
+ResumeTypesetter::ResumeTypesetter(Document *document) :Typesetter(document) {
+	string main_font = "IBMPlexSans";
+	string bold_font = main_font + " Bold";
+	string italic_font = main_font + " Italic";
+
+	int small = 10, medium = 14, large = 18;
+
+	fonts["small"] = new Font(small, main_font);
+	fonts["section"] = new Font(medium, bold_font);
+	fonts["title"] = new Font(large, bold_font);
+}
+
+void ResumeTypesetter::write() {
+
+}
+
+ResumeTypesetter::~ResumeTypesetter() {
+	for(map<string,Font*>::iterator i = fonts.begin(); i!=fonts.end(); i++)
+		delete i->second;
 }
