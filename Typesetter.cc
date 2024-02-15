@@ -124,14 +124,14 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 	fonts["small"] = new Font(small, main_font);
 	fonts["section"] = new Font(medium, bold_font);
 	fonts["name"] = new Font(large, bold_font);
+	fonts["small bold"] = new Font(small, bold_font);
 
 	margin = 25;
 	padding = 10;
-	
-	double full_element_width = document->width() - (margin * 2);
+	inner_width = document->width() - (margin * 2);
 
-	header = new ResumeHeader(*this, full_element_width);
-	education = new ResumeSection(*this, full_element_width, "Education");
+	header = new ResumeHeader(*this);
+	education = new ResumeEducationSection(*this);
 }
 
 ResumeTypesetter::~ResumeTypesetter() {
@@ -144,6 +144,7 @@ ResumeTypesetter::~ResumeTypesetter() {
 void ResumeTypesetter::write() {
 	Point cursor {margin, margin};
 	header->draw(cursor);
+	
 	cursor.y += header->height() + padding;
 	education->draw(cursor);
 }
@@ -151,11 +152,10 @@ void ResumeTypesetter::write() {
 ResumeTypesetter::ResumeElement::ResumeElement(ResumeTypesetter &typesetter)
 	:typesetter(typesetter) {}
 
-ResumeTypesetter::ResumeHeader::ResumeHeader(ResumeTypesetter &typesetter,
-																						 double max_width) 
+ResumeTypesetter::ResumeHeader::ResumeHeader(ResumeTypesetter &typesetter) 
 	:ResumeElement(typesetter) 
 {
-	size.width = max_width;
+	size.width = typesetter.inner_width;
 	size.height = 0;
 	for (size_t i = 0; i < typesetter.info.links.size(); i++) {
 		UnwrappedText *p = new UnwrappedText(typesetter.cr, 
@@ -189,20 +189,20 @@ void ResumeTypesetter::ResumeHeader::draw(Point point) {
 	name->draw(cursor);
 }
 
-ResumeTypesetter::ResumeSection::ResumeSection(
-	ResumeTypesetter &typesetter, double max_width, string name) 
+ResumeTypesetter::ResumeSectionTitle::ResumeSectionTitle(
+	ResumeTypesetter &typesetter, string name) 
 	:ResumeElement(typesetter)
 {
-	size.width = max_width;
+	size.width = typesetter.inner_width;
 	title = new UnwrappedText(typesetter.cr, typesetter.fonts["section"], name);
 	size.height = title->height();
 }
 
-ResumeTypesetter::ResumeSection::~ResumeSection() {
+ResumeTypesetter::ResumeSectionTitle::~ResumeSectionTitle() {
 	delete title;
 }
 
-void ResumeTypesetter::ResumeSection::draw(Point point) {
+void ResumeTypesetter::ResumeSectionTitle::draw(Point point) {
 	Point cursor = point;
 	title->draw(cursor);
 
@@ -215,4 +215,42 @@ void ResumeTypesetter::ResumeSection::draw(Point point) {
 	cursor.x = point.x + size.width;
 	cairo_line_to(typesetter.cr, cursor.x, cursor.y);
 	cairo_stroke(typesetter.cr);
+}
+
+ResumeTypesetter::ResumeEducationSection::ResumeEducationSection(
+	ResumeTypesetter &typesetter) : ResumeElement(typesetter) {
+	title = new ResumeSectionTitle(typesetter, "Education");
+	school = new UnwrappedText(typesetter.cr, 
+														 typesetter.fonts["small bold"], 
+														 typesetter.info.school);
+	degree = new UnwrappedText(typesetter.cr,
+													   typesetter.fonts["small"],
+														 ", " + typesetter.info.degree);
+	date = new UnwrappedText(typesetter.cr,
+													 typesetter.fonts["small"],
+													 typesetter.info.school_date);
+	size = {typesetter.inner_width, 
+				  title->width() + school->width() + typesetter.padding};
+}
+
+ResumeTypesetter::ResumeEducationSection::~ResumeEducationSection() {
+	delete title;
+	delete school;
+	delete degree;
+	delete date;
+}
+
+void ResumeTypesetter::ResumeEducationSection::draw(Point point) {
+	Point cursor = point;
+	title->draw(cursor);
+
+	cursor.y += title->height() + typesetter.padding / 2;
+	cursor.x += typesetter.padding / 2;
+	school->draw(cursor);
+
+	cursor.x += school->width();
+	degree->draw(cursor);
+
+	cursor.x = point.x + size.width - date->width() - typesetter.padding / 2;
+	date->draw(cursor);
 }

@@ -109,7 +109,7 @@ class ResumeTypesetter : public Typesetter {
 		
 		class ResumeHeader : public ResumeElement {
 			public:
-				ResumeHeader(ResumeTypesetter&, double);
+				ResumeHeader(ResumeTypesetter&);
 				virtual ~ResumeHeader();
 				void draw(Point);
 			private:
@@ -117,18 +117,28 @@ class ResumeTypesetter : public Typesetter {
 				vector<UnwrappedText*> links;
 		};
 
-		class ResumeSection : public ResumeElement {
+		class ResumeSectionTitle : public ResumeElement {
 			public:
-				ResumeSection(ResumeTypesetter&, double, string);
-				virtual ~ResumeSection();
+				ResumeSectionTitle(ResumeTypesetter&, string);
+				virtual ~ResumeSectionTitle();
 				void draw(Point);
 			private:
 				UnwrappedText *title;
 		};
 
+		class ResumeEducationSection : public ResumeElement {
+			public:
+				ResumeEducationSection(ResumeTypesetter&);
+				virtual ~ResumeEducationSection();
+				void draw(Point);
+			private:
+				ResumeSectionTitle *title;
+				UnwrappedText *school, *degree, *date;
+		};
+
 		ResumeInfo info;
 		map<string,Font*> fonts;
-		double margin, padding;
+		double margin, padding, inner_width;
 		ResumeHeader *header;
-		ResumeSection *education;
+		ResumeEducationSection *education;
 };
