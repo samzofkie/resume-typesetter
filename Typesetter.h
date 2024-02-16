@@ -23,9 +23,9 @@ struct Size {
 
 class Sized {
 	public:
-		virtual Size get_size();
-		virtual double width();
-		virtual double height();
+		Size get_size();
+		double width();
+		double height();
 	protected:
 		Size size;
 };
@@ -99,46 +99,46 @@ class ResumeTypesetter : public Typesetter {
 		ResumeTypesetter(Document *, ResumeInfo);
 		~ResumeTypesetter();
 		void write();
+
 	private:
-		class ResumeElement : public Drawable {
+		class Element : public Drawable {
 			public:
-				ResumeElement(ResumeTypesetter&);
+				Element(ResumeTypesetter&);
 			protected:
 				ResumeTypesetter& typesetter;
 		};
-		
-		class ResumeHeader : public ResumeElement {
+
+		class Header : public Element {
 			public:
-				ResumeHeader(ResumeTypesetter&);
-				virtual ~ResumeHeader();
+				Header(ResumeTypesetter&);
+				virtual ~Header();
 				void draw(Point);
 			private:
 				UnwrappedText *name;
 				vector<UnwrappedText*> links;
 		};
 
-		class ResumeSectionTitle : public ResumeElement {
+		class Section : public Element {
 			public:
-				ResumeSectionTitle(ResumeTypesetter&, string);
-				virtual ~ResumeSectionTitle();
+				Section(ResumeTypesetter&, string);
+				virtual ~Section();
 				void draw(Point);
-			private:
+			protected:
 				UnwrappedText *title;
 		};
 
-		class ResumeEducationSection : public ResumeElement {
+		class EducationSection : Section {
 			public:
-				ResumeEducationSection(ResumeTypesetter&);
-				virtual ~ResumeEducationSection();
+				EducationSection(ResumeTypesetter&);
+				virtual ~EducationSection();
 				void draw(Point);
 			private:
-				ResumeSectionTitle *title;
 				UnwrappedText *school, *degree, *date;
 		};
 
 		ResumeInfo info;
 		map<string,Font*> fonts;
 		double margin, padding, inner_width;
-		ResumeHeader *header;
-		ResumeEducationSection *education;
+		Header *header;
+		EducationSection *education;
 };
