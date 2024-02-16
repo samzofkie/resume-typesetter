@@ -57,7 +57,7 @@ class WrappedText : public DrawableText {
 	public:
 		WrappedText(cairo_t *, Font *, string, double max_width,
 							  double line_spacing = 0);
-		~WrappedText();
+		virtual ~WrappedText();
 		void draw(Point);
 	private:
 		double max_width, line_spacing;
@@ -88,10 +88,21 @@ class Typesetter {
 		cairo_t *cr;
 };
 
+struct Bullet {
+	string text;
+	vector<string> subbullets = {};
+};
+
+struct ProjectDescription {
+	string name, summary;
+	vector<Bullet> bullets;
+};
+
 struct ResumeInfo {
 	string name;
 	vector<string> links;
 	string school, degree, school_date;
+	vector<ProjectDescription> projects;
 };
 
 class ResumeTypesetter : public Typesetter {
@@ -127,7 +138,7 @@ class ResumeTypesetter : public Typesetter {
 				UnwrappedText *title;
 		};
 
-		class EducationSection : Section {
+		class EducationSection : public Section {
 			public:
 				EducationSection(ResumeTypesetter&);
 				virtual ~EducationSection();
@@ -136,9 +147,30 @@ class ResumeTypesetter : public Typesetter {
 				UnwrappedText *school, *degree, *date;
 		};
 
+		class Project : public Element {
+			public:
+				Project(ResumeTypesetter&, ProjectDescription);
+				virtual ~Project();
+				void draw(Point);
+			private:
+				UnwrappedText *name;
+				WrappedText *summary;
+				
+		};
+
+		class ExperienceSection : public Section {
+			public:
+				ExperienceSection(ResumeTypesetter&);
+				virtual ~ExperienceSection();
+				void draw(Point);
+			private:
+				vector<Project*> projects;
+		};
+
 		ResumeInfo info;
 		map<string,Font*> fonts;
 		double margin, padding, inner_width;
 		Header *header;
 		EducationSection *education;
+		ExperienceSection *experience;
 };

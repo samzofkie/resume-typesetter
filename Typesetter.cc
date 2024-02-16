@@ -125,6 +125,7 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 	fonts["section"] = new Font(medium, bold_font);
 	fonts["name"] = new Font(large, bold_font);
 	fonts["small bold"] = new Font(small, bold_font);
+	fonts["medium"] = new Font(medium, main_font);
 
 	margin = 25;
 	padding = 10;
@@ -132,6 +133,7 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 
 	header = new Header(*this);
 	education = new EducationSection(*this);
+	experience = new ExperienceSection(*this);
 }
 
 ResumeTypesetter::~ResumeTypesetter() {
@@ -139,14 +141,16 @@ ResumeTypesetter::~ResumeTypesetter() {
 		delete i->second;
 	delete header;
 	delete education;
+	delete experience;
 }
 
 void ResumeTypesetter::write() {
 	Point cursor {margin, margin};
 	header->draw(cursor);
-	
 	cursor.y += header->height() + padding;
 	education->draw(cursor);
+	cursor.y += education->height();
+	experience->draw(cursor);
 }
 
 ResumeTypesetter::Element::Element(ResumeTypesetter &typesetter)
@@ -243,4 +247,58 @@ void ResumeTypesetter::EducationSection::draw(Point point) {
 	degree->draw(cursor);
 	cursor.x = point.x + size.width - date->width() - typesetter.padding / 2;
 	date->draw(cursor);
+}
+
+ResumeTypesetter::Project::Project(ResumeTypesetter &typesetter, 
+																	 ProjectDescription project_description)
+	:Element(typesetter) 
+{
+	name = new UnwrappedText(typesetter.cr, typesetter.fonts["medium"], 
+											     project_description.name);
+	summary = new WrappedText(typesetter.cr, typesetter.fonts["small"],
+														project_description.summary,
+														typesetter.inner_width - typesetter.padding * 2);
+	size = {typesetter.inner_width - typesetter.padding,
+				 	name->height() + summary->height()};
+}
+
+ResumeTypesetter::Project::~Project() {
+	delete name;
+	delete summary;
+}
+
+void ResumeTypesetter::Project::draw(Point point) {
+	Point cursor = point;
+	name->draw(cursor);
+	cursor.y += name->height();
+	cursor.x += typesetter.padding / 2;
+	summary->draw(cursor);	
+};
+
+ResumeTypesetter::ExperienceSection::ExperienceSection(
+	ResumeTypesetter &typesetter) : Section(typesetter, "Experience")
+{
+	size.height = 0;
+	for (size_t i=0; i<typesetter.info.projects.size(); i++) {
+		Project *project = new Project(typesetter, typesetter.info.projects[i]);
+		size.height += project->height();
+		projects.push_back(project);
+	}
+}
+	
+ResumeTypesetter::ExperienceSection::~ExperienceSection() {
+	for (size_t i=0; i<projects.size(); i++) {
+		delete projects[i];	
+	}
+}
+
+void ResumeTypesetter::ExperienceSection::draw(Point point) {
+	Point cursor = point;
+	Section::draw(cursor);
+	cursor.y += title->height();
+	cursor.x += typesetter.padding / 2;
+	for (size_t i=0; i<projects.size(); i++) {
+		projects[i]->draw(cursor);
+		cursor.y += projects[i]->height();
+	}
 }
