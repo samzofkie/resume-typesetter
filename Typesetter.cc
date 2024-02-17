@@ -126,6 +126,7 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 	fonts["name"] = new Font(large, bold_font);
 	fonts["small bold"] = new Font(small, bold_font);
 	fonts["medium"] = new Font(medium, main_font);
+	fonts["small italic"] = new Font(small, italic_font);
 
 	margin = 25;
 	padding = 10;
@@ -155,6 +156,11 @@ void ResumeTypesetter::write() {
 	experience->draw(cursor);
 	cursor.y += experience->height();
 	skills->draw(cursor);
+	cursor.y += skills->height() + padding;
+
+	WrappedText cute_note(cr, fonts["small italic"], "This resume was created with a typesetting program I wrote in C++.", inner_width);
+	cursor.x = margin + (inner_width - cute_note.width()) / 2;
+	cute_note.draw(cursor);
 }
 
 ResumeTypesetter::Element::Element(ResumeTypesetter &typesetter)
@@ -408,6 +414,7 @@ ResumeTypesetter::SkillsSection::SkillsSection(ResumeTypesetter &typesetter)
 			typesetter.fonts["small"],
 			comma_separated_skills,
 			typesetter.inner_width - typesetter.padding);
+		size.height += skills[i]->skills_list->height();
 	}
 }
 
