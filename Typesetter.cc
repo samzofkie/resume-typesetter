@@ -66,8 +66,11 @@ string WrappedText::rest_of_string(string str, size_t start) {
 	return str.substr(start, str.size() - start);
 }
 
-WrappedText::WrappedText(cairo_t *cr, Font *font, string str, 
-																 double max_width, double line_spacing)
+WrappedText::WrappedText(cairo_t *cr, 
+												 Font *font,
+												 string str, 
+												 double max_width, 
+												 double line_spacing)
 	:DrawableText(cr, font, str), max_width(max_width), line_spacing(line_spacing) 
 {
 
@@ -97,9 +100,10 @@ void WrappedText::draw(Point point) {
 	}
 }
 
-Document::Document(string name, Size _size) :name(name),
-	surface(cairo_pdf_surface_create(name.c_str(), _size.width, _size.height)),
-	 cr(cairo_create(surface)) 
+Document::Document(string name, Size _size) 
+	:name(name),
+	 surface(cairo_pdf_surface_create(name.c_str(), _size.width, _size.height)),
+	 cr(cairo_create(surface))
 {
 	size = _size;
 	cairo_set_line_width(cr, 0.5);
@@ -111,10 +115,13 @@ Document::~Document() {
 }
 
 Typesetter::Typesetter(Document *document) 
-	:document(document), cr(document->cr) {}
+	:document(document), 
+	 cr(document->cr) 
+{}
 
 ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info) 
-	:Typesetter(document), info(info) {
+	:Typesetter(document), info(info) 
+{
 	string main_font = "IBMPlexSans";
 	string bold_font = main_font + " Bold";
 	string italic_font = main_font + " Italic";
@@ -174,7 +181,8 @@ ResumeTypesetter::Element::Element(ResumeTypesetter &typesetter)
 
 
 ResumeTypesetter::Header::Header(ResumeTypesetter &typesetter) 
-	:Element(typesetter) 
+	:Element(typesetter),
+	 name(new UnwrappedText(cr, fonts["name"], info.name))
 {
 	size.width = inner_width;
 	size.height = 0;
@@ -183,7 +191,6 @@ ResumeTypesetter::Header::Header(ResumeTypesetter &typesetter)
 		size.height += p->height();
 		links.push_back(p);
 	}
-	name = new UnwrappedText(cr, fonts["name"], info.name);
 }
 
 ResumeTypesetter::Header::~Header() {
@@ -218,9 +225,9 @@ void ResumeTypesetter::Header::draw(Point point) {
 }
 
 ResumeTypesetter::Section::Section(ResumeTypesetter &typesetter, string name)
-	:Element(typesetter)
+	:Element(typesetter),
+	 title(new UnwrappedText(cr, fonts["section"], name))
 {
-	title = new UnwrappedText(cr, fonts["section"], name);
 	size = {inner_width, title->height()};
 }
 
@@ -244,10 +251,12 @@ void ResumeTypesetter::Section::draw(Point point) {
 
 ResumeTypesetter::EducationSection::EducationSection(
 	ResumeTypesetter &typesetter
-) :Section(typesetter, "Education") {
-	school = new UnwrappedText(cr, fonts["small bold"], info.school);
-	degree = new UnwrappedText(cr, fonts["small"], ", " + info.degree);
-	date = new UnwrappedText(cr, fonts["small"], info.school_date);
+) 
+	:Section(typesetter, "Education"),
+	 school(new UnwrappedText(cr, fonts["small bold"], info.school)),
+   degree(new UnwrappedText(cr, fonts["small"], ", " + info.degree)),
+	 date(new UnwrappedText(cr, fonts["small"], info.school_date))
+{
 	size.height += school->height() + padding;
 }
 
@@ -269,12 +278,15 @@ void ResumeTypesetter::EducationSection::draw(Point point) {
 	date->draw(cursor);
 }
 
-ResumeTypesetter::BulletList::BulletList(ResumeTypesetter &typesetter,
-																				 vector<Bullet> bullets)
-	:Element(typesetter), bullet_spacing(10)
+ResumeTypesetter::BulletList::BulletList(
+	ResumeTypesetter &typesetter,
+	vector<Bullet> bullets
+)
+	:Element(typesetter), 
+	 bullet_spacing(10),
+	 bullet(new UnwrappedText(cr, fonts["small"], "•")),
+	 subbullet(new UnwrappedText(cr, fonts["small"], "○"))
 {
-	bullet = new UnwrappedText(cr, fonts["small"], "•");
-	subbullet = new UnwrappedText(cr, fonts["small"], "○");
 	size.height = 0;
 	
 	for (size_t i=0; i<bullets.size(); i++) {
@@ -336,15 +348,16 @@ void ResumeTypesetter::BulletList::draw(Point point) {
 
 ResumeTypesetter::Project::Project(ResumeTypesetter &typesetter, 
 																	 ProjectDescription project_description)
-	:Element(typesetter) 
+	:Element(typesetter),
+	 name(new UnwrappedText(cr, fonts["medium"], project_description.name)),
+	 summary(new WrappedText(
+		 cr, 
+		 fonts["small"],
+		 project_description.summary,
+		 inner_width - padding * 4
+	 )),
+	 bullets(new BulletList(typesetter, project_description.bullets))
 {
-	name = new UnwrappedText(cr, fonts["medium"], project_description.name);
-	summary = new WrappedText(
-		cr, 
-		fonts["small"],
-		project_description.summary,
-		inner_width - padding * 4);
-	bullets = new BulletList(typesetter, project_description.bullets);
 	size = {inner_width - padding * 2,
 				 	name->height() + summary->height() + bullets->height()};
 }
@@ -366,7 +379,9 @@ void ResumeTypesetter::Project::draw(Point point) {
 };
 
 ResumeTypesetter::ExperienceSection::ExperienceSection(
-	ResumeTypesetter &typesetter) : Section(typesetter, "Experience")
+	ResumeTypesetter &typesetter
+) 
+	:Section(typesetter, "Experience")
 {
 	for (size_t i=0; i<info.projects.size(); i++) {
 		Project *project = new Project(typesetter, info.projects[i]);

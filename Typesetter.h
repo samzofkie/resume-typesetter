@@ -166,8 +166,8 @@ class ResumeTypesetter : public Typesetter {
 					WrappedText *bullet_text;
 					vector<WrappedText*> subbullet_texts;
 				};
-				UnwrappedText *bullet, *subbullet;
 				double bullet_spacing;
+				UnwrappedText *bullet, *subbullet;
 				vector<BulletText*> bullet_texts;	
 		};
 
