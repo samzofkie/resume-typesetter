@@ -98,11 +98,17 @@ struct ProjectDescription {
 	vector<Bullet> bullets;
 };
 
+struct SkillCategory {
+	string name;
+	vector<string> skills;
+};
+
 struct ResumeInfo {
 	string name;
-	vector<string> links;
+	vector<string> links = {};
 	string school, degree, school_date;
-	vector<ProjectDescription> projects;
+	vector<ProjectDescription> projects = {};
+	vector<SkillCategory> skill_categories = {};
 };
 
 class ResumeTypesetter : public Typesetter {
@@ -182,10 +188,24 @@ class ResumeTypesetter : public Typesetter {
 				vector<Project*> projects;
 		};
 
+		class SkillsSection : public Section {
+			public:
+				SkillsSection(ResumeTypesetter&);
+				virtual ~SkillsSection();
+				void draw(Point);
+			private:
+				struct SkillsTexts {
+					UnwrappedText *category;
+					WrappedText *skills_list;
+				};
+				vector<SkillsTexts*> skills;
+		};
+
 		ResumeInfo info;
 		map<string,Font*> fonts;
 		double margin, padding, inner_width;
 		Header *header;
 		EducationSection *education;
 		ExperienceSection *experience;
+		SkillsSection *skills;
 };

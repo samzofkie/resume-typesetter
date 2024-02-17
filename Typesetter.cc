@@ -119,7 +119,7 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 	string bold_font = main_font + " Bold";
 	string italic_font = main_font + " Italic";
 
-	int small = 8, medium = 14, large = 18;
+	int small = 10, medium = 14, large = 18;
 
 	fonts["small"] = new Font(small, main_font);
 	fonts["section"] = new Font(medium, bold_font);
@@ -134,6 +134,7 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 	header = new Header(*this);
 	education = new EducationSection(*this);
 	experience = new ExperienceSection(*this);
+	skills = new SkillsSection(*this);
 }
 
 ResumeTypesetter::~ResumeTypesetter() {
@@ -142,6 +143,7 @@ ResumeTypesetter::~ResumeTypesetter() {
 	delete header;
 	delete education;
 	delete experience;
+	delete skills;
 }
 
 void ResumeTypesetter::write() {
@@ -151,6 +153,8 @@ void ResumeTypesetter::write() {
 	education->draw(cursor);
 	cursor.y += education->height();
 	experience->draw(cursor);
+	cursor.y += experience->height();
+	skills->draw(cursor);
 }
 
 ResumeTypesetter::Element::Element(ResumeTypesetter &typesetter)
@@ -369,5 +373,51 @@ void ResumeTypesetter::ExperienceSection::draw(Point point) {
 	for (size_t i=0; i<projects.size(); i++) {
 		projects[i]->draw(cursor);
 		cursor.y += projects[i]->height();
+	}
+}
+
+ResumeTypesetter::SkillsSection::SkillsSection(ResumeTypesetter &typesetter)
+	:Section(typesetter, "Skills")
+{
+	skills = {};
+	for (size_t i=0; i<typesetter.info.skill_categories.size(); i++) {
+		skills.push_back(new SkillsTexts);
+		skills[i]->category = new UnwrappedText(
+			typesetter.cr,
+			typesetter.fonts["small bold"],
+			typesetter.info.skill_categories[i].name + ": ");
+		string comma_separated_skills = "";
+		for (size_t j=0; j<typesetter.info.skill_categories[i].skills.size(); j++) {
+			comma_separated_skills += 
+				typesetter.info.skill_categories[i].skills[j];
+			if (!(j == typesetter.info.skill_categories[i].skills.size() - 1))
+				comma_separated_skills += ", ";
+		}
+		skills[i]->skills_list = new WrappedText(
+			typesetter.cr,
+			typesetter.fonts["small"],
+			comma_separated_skills,
+			typesetter.inner_width - typesetter.padding);
+	}
+}
+
+ResumeTypesetter::SkillsSection::~SkillsSection() {
+	for (size_t i=0; i<skills.size(); i++) {
+		delete skills[i]->category;
+		delete skills[i]->skills_list;
+		delete skills[i];
+	}
+}
+
+void ResumeTypesetter::SkillsSection::draw(Point point) {
+	Point cursor = point;
+	Section::draw(cursor);
+	cursor.y += title->height();
+	for (size_t i=0; i<skills.size(); i++) {
+		cursor.x = point.x + typesetter.padding;
+		skills[i]->category->draw(cursor);
+		cursor.x += skills[i]->category->width();
+		skills[i]->skills_list->draw(cursor);
+		cursor.y += skills[i]->skills_list->height();
 	}
 }

@@ -37,6 +37,11 @@ int main() {
 
 	info.projects = {p1, p2};
 
+	SkillCategory c1 {
+		"Skills", {"Dancing", "creating art", "purposeful intention", "bad programming"}
+	};
+	info.skill_categories = {c1};
+
 	ResumeTypesetter typesetter(resume, info);
 	typesetter.write();
 	delete resume;
