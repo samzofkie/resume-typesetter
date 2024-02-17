@@ -9,7 +9,9 @@ class Font {
 		Font(int, string);
 		~Font();
 		PangoFontDescription *get_description();
-	private:	
+		int size();
+	private:
+		int _size;
 		PangoFontDescription *description;
 };
 
@@ -127,6 +129,14 @@ class ResumeTypesetter : public Typesetter {
 				map<string,Font*> fonts;
 				double margin, padding, inner_width;
 		};
+		
+		class MaxWidthElement : public Element {
+			public:
+				MaxWidthElement(ResumeTypesetter&);
+				MaxWidthElement(ResumeTypesetter&, double);
+			protected:
+				double max_width;
+		};
 
 		class Header : public Element {
 			public:
@@ -156,9 +166,9 @@ class ResumeTypesetter : public Typesetter {
 				UnwrappedText *school, *degree, *date;
 		};
 
-		class BulletList : public Element {
+		class BulletList : public MaxWidthElement {
 			public:
-				BulletList(ResumeTypesetter&, vector<Bullet>);
+				BulletList(ResumeTypesetter&, double, vector<Bullet>);
 				virtual ~BulletList();
 				void draw(Point);
 			private:
@@ -171,9 +181,9 @@ class ResumeTypesetter : public Typesetter {
 				vector<BulletText*> bullet_texts;	
 		};
 
-		class Project : public Element {
+		class Project : public MaxWidthElement {
 			public:
-				Project(ResumeTypesetter&, ProjectDescription);
+				Project(ResumeTypesetter&, double, ProjectDescription);
 				virtual ~Project();
 				void draw(Point);
 			private:

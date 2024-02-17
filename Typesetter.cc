@@ -7,10 +7,11 @@
 #include <cairo-pdf.h>
 using namespace std;
 
-Font::Font(int size, string font_str) 
-	:description(pango_font_description_from_string(font_str.c_str()))
+Font::Font(int size, string font_str)
+	:_size(size),
+	 description(pango_font_description_from_string(font_str.c_str()))
 {
-	pango_font_description_set_size(description, size * PANGO_SCALE);	
+	pango_font_description_set_size(description, _size * PANGO_SCALE);	
 }
 
 Font::~Font() {
@@ -19,6 +20,10 @@ Font::~Font() {
 
 PangoFontDescription *Font::get_description() {
 	return description;
+}
+
+int Font::size() {
+	return _size;
 }
 
 Size Sized::get_size() { return size; }
@@ -179,6 +184,21 @@ ResumeTypesetter::Element::Element(ResumeTypesetter &typesetter)
 	  inner_width(typesetter.inner_width) 
 {}
 
+ResumeTypesetter::MaxWidthElement::MaxWidthElement(
+	ResumeTypesetter &typesetter
+)
+	:Element(typesetter)
+{
+	max_width = typesetter.inner_width;
+}
+
+ResumeTypesetter::MaxWidthElement::MaxWidthElement(
+	ResumeTypesetter &typesetter,
+	double max_width
+)
+	:Element(typesetter),
+	 max_width(max_width)
+{}
 
 ResumeTypesetter::Header::Header(ResumeTypesetter &typesetter) 
 	:Element(typesetter),
@@ -207,7 +227,7 @@ void ResumeTypesetter::Header::draw(Point point) {
 		cursor.x += (size.width - links[i]->width());
 		links[i]->draw(cursor);
 
-		int underline_height = 2;
+		int underline_height = fonts["small"]->size() / 5;
 		
 		cursor.y += links[i]->height() - underline_height;
 		cairo_move_to(cr, cursor.x, cursor.y);
@@ -280,10 +300,11 @@ void ResumeTypesetter::EducationSection::draw(Point point) {
 
 ResumeTypesetter::BulletList::BulletList(
 	ResumeTypesetter &typesetter,
+	double max_width,
 	vector<Bullet> bullets
 )
-	:Element(typesetter), 
-	 bullet_spacing(10),
+	:MaxWidthElement(typesetter, max_width), 
+	 bullet_spacing(15),
 	 bullet(new UnwrappedText(cr, fonts["small"], "•")),
 	 subbullet(new UnwrappedText(cr, fonts["small"], "○"))
 {
@@ -296,7 +317,7 @@ ResumeTypesetter::BulletList::BulletList(
 			cr,
 			fonts["small"], 
 			bullets[i].text,
-			inner_width - padding * 3 - bullet_spacing);
+			max_width - bullet_spacing);
 		
 		size.height += bullet_texts[i]->bullet_text->height();
 		
@@ -308,7 +329,8 @@ ResumeTypesetter::BulletList::BulletList(
 				cr,
 				fonts["small"], 
 				bullets[i].subbullets[j],
-				typesetter.inner_width - padding * 3 - bullet_spacing * 3));
+				max_width - bullet_spacing * 2)
+			);
 			
 			size.height += bullet_texts[i]->subbullet_texts[j]->height();
 		}
@@ -333,12 +355,15 @@ void ResumeTypesetter::BulletList::draw(Point point) {
   for (size_t i=0; i<bullet_texts.size(); i++) {
 		cursor.x = point.x;
 		bullet->draw(cursor);
+		
 		cursor.x += bullet_spacing;
 		bullet_texts[i]->bullet_text->draw(cursor);
+		
 		cursor.y += bullet_texts[i]->bullet_text->height();
 		for (size_t j=0; j<bullet_texts[i]->subbullet_texts.size(); j++) {
-			cursor.x = point.x + bullet_spacing * 2;
+			cursor.x = point.x + bullet_spacing;
 			subbullet->draw(cursor);
+			
 			cursor.x += bullet_spacing;
 			bullet_texts[i]->subbullet_texts[j]->draw(cursor);
 			cursor.y += bullet_texts[i]->subbullet_texts[j]->height();
@@ -346,19 +371,26 @@ void ResumeTypesetter::BulletList::draw(Point point) {
 	}
 }
 
-ResumeTypesetter::Project::Project(ResumeTypesetter &typesetter, 
-																	 ProjectDescription project_description)
-	:Element(typesetter),
+ResumeTypesetter::Project::Project(
+	ResumeTypesetter &typesetter,
+	double max_width,
+	ProjectDescription project_description
+)
+	:MaxWidthElement(typesetter, max_width),
 	 name(new UnwrappedText(cr, fonts["medium"], project_description.name)),
 	 summary(new WrappedText(
 		 cr, 
 		 fonts["small"],
 		 project_description.summary,
-		 inner_width - padding * 4
+		 max_width - padding
 	 )),
-	 bullets(new BulletList(typesetter, project_description.bullets))
+	 bullets(new BulletList(
+		 typesetter, 
+		 max_width - padding,
+		 project_description.bullets
+	 ))
 {
-	size = {inner_width - padding * 2,
+	size = {max_width,
 				 	name->height() + summary->height() + bullets->height()};
 }
 
@@ -371,9 +403,11 @@ ResumeTypesetter::Project::~Project() {
 void ResumeTypesetter::Project::draw(Point point) {
 	Point cursor = point;
 	name->draw(cursor);
+	
 	cursor.y += name->height();
 	cursor.x += padding;
 	summary->draw(cursor);
+	
 	cursor.y += summary->height();
 	bullets->draw(cursor);
 };
@@ -384,7 +418,11 @@ ResumeTypesetter::ExperienceSection::ExperienceSection(
 	:Section(typesetter, "Experience")
 {
 	for (size_t i=0; i<info.projects.size(); i++) {
-		Project *project = new Project(typesetter, info.projects[i]);
+		Project *project = new Project(
+			typesetter, 
+			inner_width - padding,
+			info.projects[i]
+		);
 		size.height += project->height();
 		projects.push_back(project);
 	}
