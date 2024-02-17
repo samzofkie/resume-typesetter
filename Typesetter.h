@@ -122,7 +122,10 @@ class ResumeTypesetter : public Typesetter {
 			public:
 				Element(ResumeTypesetter&);
 			protected:
-				ResumeTypesetter& typesetter;
+				cairo_t *cr;
+				ResumeInfo info;
+				map<string,Font*> fonts;
+				double margin, padding, inner_width;
 		};
 
 		class Header : public Element {
