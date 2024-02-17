@@ -147,6 +147,21 @@ class ResumeTypesetter : public Typesetter {
 				UnwrappedText *school, *degree, *date;
 		};
 
+		class BulletList : public Element {
+			public:
+				BulletList(ResumeTypesetter&, vector<Bullet>);
+				virtual ~BulletList();
+				void draw(Point);
+			private:
+				struct BulletText {
+					WrappedText *bullet_text;
+					vector<WrappedText*> subbullet_texts;
+				};
+				UnwrappedText *bullet, *subbullet;
+				double bullet_spacing;
+				vector<BulletText*> bullet_texts;	
+		};
+
 		class Project : public Element {
 			public:
 				Project(ResumeTypesetter&, ProjectDescription);
@@ -155,7 +170,7 @@ class ResumeTypesetter : public Typesetter {
 			private:
 				UnwrappedText *name;
 				WrappedText *summary;
-				
+				BulletList *bullets;	
 		};
 
 		class ExperienceSection : public Section {
