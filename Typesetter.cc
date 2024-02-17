@@ -185,13 +185,23 @@ ResumeTypesetter::Header::~Header() {
 
 void ResumeTypesetter::Header::draw(Point point) {
 	Point cursor = point;
-
+	
+	cairo_set_source_rgb(typesetter.cr, 0, 0, 1);
 	for (size_t i=0; i < links.size(); i++) {
 		cursor.x += (size.width - links[i]->width());
 		links[i]->draw(cursor);
+
+		int underline_height = 2;
+		
+		cursor.y += links[i]->height() - underline_height;
+		cairo_move_to(typesetter.cr, cursor.x, cursor.y);
+		cairo_line_to(typesetter.cr, cursor.x + links[i]->width(), cursor.y);
+		cairo_stroke(typesetter.cr);
+		cursor.y += underline_height;
+
 		cursor.x = point.x;
-		cursor.y += links[i]->height();
 	}
+	cairo_set_source_rgb(typesetter.cr, 0, 0, 0);
 	
 	cursor.y -= name->height();
 	cursor.x = point.x;
