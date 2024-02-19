@@ -22,6 +22,7 @@ PangoFontDescription *Font::get_description() {
 	return description;
 }
 
+/* Font's size() is the Font point-- not a Size object. */
 int Font::size() {
 	return _size;
 }
@@ -30,6 +31,16 @@ Size Sized::get_size() { return size; }
 double Sized::width() { return size.width; }
 double Sized::height() { return size.height; }
 
+/* Objects implementing DrawableText do the calls to create the prospective
+	object to get it's size, to fufill the height() and width() methods from
+	Sized, but don't actual render the text to a surface or Document until their
+	draw() method is called, with the Point that they're supposed to be drawn at.
+	Then the destructor is natually responsible for the clean up Pnago and Cairo
+	calls.
+
+	Doing it this way allows for the top level Typesetter program to create a bit
+	of text, understand it's prospective height and width, and then render at the
+	place it decides by calling it's draw() method. */
 DrawableText::DrawableText(cairo_t *cr, Font *font, string str) 
 	:cr(cr), font(font), str(str) {}
 
@@ -54,6 +65,10 @@ void UnwrappedText::draw(Point point) {
 	pango_cairo_show_layout(cr, layout);
 }
 
+/* This helper function finds the longest space-separated sub string of it's
+	argument (str) that fits into max_width. It does this by creating an
+	UnwrappedText on the stack and querying it's width in the condition of the
+	while loop. */
 string WrappedText::longest_substring_that_fits(string str) {
 	size_t substr_length = 0, prev_length= 0;
 	string substr = str.substr(0, substr_length);
@@ -105,6 +120,7 @@ void WrappedText::draw(Point point) {
 	}
 }
 
+/* Document mainly manages the Cairo surface and Cairo object *cr. */
 Document::Document(string name, Size _size) 
 	:name(name),
 	 surface(cairo_pdf_surface_create(name.c_str(), _size.width, _size.height)),
@@ -119,11 +135,15 @@ Document::~Document() {
 	cairo_surface_destroy(surface);
 }
 
+/* Typesetters get their cr from the Document they're working with. */
 Typesetter::Typesetter(Document *document) 
 	:document(document), 
 	 cr(document->cr) 
 {}
 
+/* The nested classes of ResumeTypesetter are all passed a reference to the 
+	outside class, so they can read it's properties such as it's font map, and 
+	the margin, padding, and inner_width values. */
 ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info) 
 	:Typesetter(document), info(info) 
 {
@@ -134,10 +154,11 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 	int small = 10, medium = 14, large = 18;
 
 	fonts["small"] = new Font(small, main_font);
+	fonts["medium"] = new Font(medium, main_font);
+	fonts["large"] = new Font(large, main_font);
 	fonts["section"] = new Font(medium, bold_font);
 	fonts["name"] = new Font(large, bold_font);
 	fonts["small bold"] = new Font(small, bold_font);
-	fonts["medium"] = new Font(medium, main_font);
 	fonts["small italic"] = new Font(small, italic_font);
 
 	margin = 25;
@@ -170,7 +191,7 @@ void ResumeTypesetter::write() {
 	skills->draw(cursor);
 	cursor.y += skills->height() + padding;
 
-	WrappedText cute_note(cr, fonts["small italic"], "This resume was created with a typesetting program I wrote in C++.", inner_width);
+	WrappedText cute_note(cr, fonts["small italic"], "This resume was typeset with a program I wrote in C++", inner_width);
 	cursor.x = margin + (inner_width - cute_note.width()) / 2;
 	cute_note.draw(cursor);
 }
@@ -473,7 +494,7 @@ ResumeTypesetter::SkillsSection::SkillsSection(ResumeTypesetter &typesetter)
 			cr,
 			fonts["small"],
 			comma_separated_skills,
-			inner_width - padding);
+			inner_width - padding - skills[i]->category->width());
 		
 		size.height += skills[i]->skills_list->height();
 	}

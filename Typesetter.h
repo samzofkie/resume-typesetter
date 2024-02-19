@@ -4,6 +4,9 @@
 #include <pango/pangocairo.h>
 using namespace std;
 
+/* An object representing a font-- an int size, and a string naming the font
+	family. This object exists to make use of a destructor that calls a 
+	Pango function to free the font. */
 class Font {
 	public:
 		Font(int, string);
@@ -23,6 +26,10 @@ struct Size {
 	double width, height;
 };
 
+/* This is an abstract class for anything that has a 2D size that might be
+  nice for someone else to ask for, such as a Text object, a Document, or
+	any of the sub-classes of the actual ResumeTypesetter class (which usually
+	correspond to sections, like "experience" or "education". */
 class Sized {
 	public:
 		Size get_size();
@@ -37,6 +44,8 @@ class Drawable : public Sized {
 		virtual void draw(Point) = 0;
 };
 
+/* DrawableText had a draw function, a Font representing the font to be used,
+  and a string member "str", representing the actual text to be rendered. */
 class DrawableText : public Drawable {
 	public:
 		DrawableText(cairo_t *, Font *, string);
@@ -46,6 +55,8 @@ class DrawableText : public Drawable {
 		string str;	
 };
 
+/* UnwrappedText is simple-- it just draws the text at the Point it's draw
+	method is pased. */
 class UnwrappedText : public DrawableText {
 	public:
 		UnwrappedText(cairo_t *, Font *, string);
@@ -55,6 +66,13 @@ class UnwrappedText : public DrawableText {
 		PangoLayout *layout;
 };
 
+/* WrappedText is a bit more complex-- it takes a max_width double, and in it's
+	constructor, uses private methods to calculate the longest UnwrappedText 
+	that will fit within it's max_width, and so on, breaking up it's str string
+	into a vector of UnwrappedText, none of which exceeds max_width. It's draw()
+	method draws each UnwrappedText on top of one another, and it's height() and
+	width() methods are overriden to accurately represent the final block of text. 
+*/
 class WrappedText : public DrawableText {
 	public:
 		WrappedText(cairo_t *, Font *, string, double max_width,
@@ -69,6 +87,8 @@ class WrappedText : public DrawableText {
 		string rest_of_string(string, size_t);
 };
 
+/* The Document object mainly contains a name that the final pdf is saved to,
+	 and since it is Sized, the height and width of it. */
 class Document : public Sized {
 	public:
 		Document(string, Size size = {8.5 * 72, 11 * 72});
@@ -80,6 +100,8 @@ class Document : public Sized {
 		cairo_t *cr;
 };
 
+/* This abstract class respresent an object that draws lots of things on a
+	Document that it's passed. */
 class Typesetter {
 	public:
 		Typesetter(Document *);
@@ -90,6 +112,8 @@ class Typesetter {
 		cairo_t *cr;
 };
 
+/* These four structs are just for separating the data ultimately written to
+	 resume in a logical structure that makes sense to the ResumeTypesetter. */
 struct Bullet {
 	string text;
 	vector<string> subbullets = {};
@@ -113,6 +137,7 @@ struct ResumeInfo {
 	vector<SkillCategory> skill_categories = {};
 };
 
+/* ResumeTypesetter is initialized with a ResumeInfo object. */
 class ResumeTypesetter : public Typesetter {
 	public:
 		ResumeTypesetter(Document *, ResumeInfo);
@@ -129,7 +154,11 @@ class ResumeTypesetter : public Typesetter {
 				map<string,Font*> fonts;
 				double margin, padding, inner_width;
 		};
-		
+
+		/* MaxWidthElement is just Element but with a max_width member that it's
+			subclasses must be careful to avoid drawing outside of. It's a way for
+			main ResumeTypesetter's logic to easily communicate the x-axis boundaries
+			of a section. */
 		class MaxWidthElement : public Element {
 			public:
 				MaxWidthElement(ResumeTypesetter&);
@@ -157,6 +186,10 @@ class ResumeTypesetter : public Typesetter {
 				UnwrappedText *title;
 		};
 
+		/* Many nested classes inherit from Section so they can use Section::draw()
+			in their own draw() method, instead of composition, in which case it
+			would need to create and destroy a Section object. This is pretty arbitrary
+			though and could easily change in the future. */
 		class EducationSection : public Section {
 			public:
 				EducationSection(ResumeTypesetter&);
