@@ -104,11 +104,11 @@ class Document : public Sized {
 	Document that it's passed. */
 class Typesetter {
 	public:
-		Typesetter(Document *);
+		Typesetter(Document&);
 		virtual void write() = 0;
 	
 	protected:
-		Document *document;
+		Document& document;
 		cairo_t *cr;
 };
 
@@ -140,7 +140,7 @@ struct ResumeInfo {
 /* ResumeTypesetter is initialized with a ResumeInfo object. */
 class ResumeTypesetter : public Typesetter {
 	public:
-		ResumeTypesetter(Document *, ResumeInfo);
+		ResumeTypesetter(Document&, ResumeInfo);
 		~ResumeTypesetter();
 		void write();
 

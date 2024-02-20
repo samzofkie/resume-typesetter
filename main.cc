@@ -1,8 +1,10 @@
 #include "Typesetter.h"
+#include <iostream>
+using namespace std;
 
 int main() {
-	Document *resume = new Document("resume.pdf");
-
+	Document resume("resume.pdf");
+	
 	ResumeInfo info;
 	info.name = "My Name";
 	info.links = {"myemail@email.com", "website.com/myname", "myname.com"};
@@ -42,8 +44,9 @@ int main() {
 	};
 	info.skill_categories = {c1};
 
-	ResumeTypesetter typesetter(resume, info);
+	
+	ResumeTypesetter typesetter(resume, info);	
 	typesetter.write();
-	delete resume;
+
 	return 0;
 }

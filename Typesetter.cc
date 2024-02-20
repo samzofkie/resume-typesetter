@@ -136,15 +136,15 @@ Document::~Document() {
 }
 
 /* Typesetters get their cr from the Document they're working with. */
-Typesetter::Typesetter(Document *document) 
+Typesetter::Typesetter(Document &document) 
 	:document(document), 
-	 cr(document->cr) 
+	 cr(document.cr) 
 {}
 
 /* The nested classes of ResumeTypesetter are all passed a reference to the 
 	outside class, so they can read it's properties such as it's font map, and 
 	the margin, padding, and inner_width values. */
-ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info) 
+ResumeTypesetter::ResumeTypesetter(Document &document, ResumeInfo info) 
 	:Typesetter(document), info(info) 
 {
 	string main_font = "IBMPlexSans";
@@ -163,7 +163,7 @@ ResumeTypesetter::ResumeTypesetter(Document *document, ResumeInfo info)
 
 	margin = 25;
 	padding = 10;
-	inner_width = document->width() - (margin * 2);
+	inner_width = document.width() - (margin * 2);
 
 	header = new Header(*this);
 	education = new EducationSection(*this);
