@@ -1,145 +1,16 @@
-#include "Typesetter.h"
-#include <iostream>
-#include <vector>
+#include "resume-typesetter.h"
 #include <string>
+#include <vector>
 #include <map>
+#include "typesetter.h"
+#include "document.h"
+#include "drawable.h"
+#include "resume-info.h"
+#include "text.h"
+#include "point.h"
 #include <pango/pangocairo.h>
-#include <cairo-pdf.h>
 using namespace std;
 
-Font::Font(int size, string font_str)
-	:_size(size),
-	 description(pango_font_description_from_string(font_str.c_str()))
-{
-	pango_font_description_set_size(description, _size * PANGO_SCALE);	
-}
-
-Font::~Font() {
-	pango_font_description_free(description);
-}
-
-PangoFontDescription *Font::get_description() {
-	return description;
-}
-
-/* Font's size() is the Font point-- not a Size object. */
-int Font::size() {
-	return _size;
-}
-
-Size Sized::get_size() { return size; }
-double Sized::width() { return size.width; }
-double Sized::height() { return size.height; }
-
-/* Objects implementing DrawableText do the calls to create the prospective
-	object to get it's size, to fufill the height() and width() methods from
-	Sized, but don't actual render the text to a surface or Document until their
-	draw() method is called, with the Point that they're supposed to be drawn at.
-	Then the destructor is natually responsible for the clean up Pnago and Cairo
-	calls.
-
-	Doing it this way allows for the top level Typesetter program to create a bit
-	of text, understand it's prospective height and width, and then render at the
-	place it decides by calling it's draw() method. */
-DrawableText::DrawableText(cairo_t *cr, Font *font, string str) 
-	:cr(cr), font(font), str(str) {}
-
-UnwrappedText::UnwrappedText(cairo_t *cr, Font *font, string str)
-	:DrawableText(cr, font, str), layout(pango_cairo_create_layout(cr))
-{
-	pango_layout_set_text(layout, str.c_str(), -1);
-	pango_layout_set_font_description(layout, font->get_description());
-
-	int _width, _height;
-	pango_layout_get_size(layout, &_width, &_height);
-	size.width = (double)_width / PANGO_SCALE;
-	size.height = (double)_height / PANGO_SCALE;
-}
-
-UnwrappedText::~UnwrappedText() {
-	g_object_unref(layout);
-}
-
-void UnwrappedText::draw(Point point) {
-	cairo_move_to(cr, point.x, point.y);
-	pango_cairo_show_layout(cr, layout);
-}
-
-/* This helper function finds the longest space-separated sub string of it's
-	argument (str) that fits into max_width. It does this by creating an
-	UnwrappedText on the stack and querying it's width in the condition of the
-	while loop. */
-string WrappedText::longest_substring_that_fits(string str) {
-	size_t substr_length = 0, prev_length= 0;
-	string substr = str.substr(0, substr_length);
-	
-	while (UnwrappedText(cr, font, substr).width() < max_width) {
-		prev_length = substr_length;
-		substr_length = str.find(' ', substr_length + 1);
-		substr = str.substr(0, substr_length);
-	};
-	
-	return str.substr(0, prev_length);
-}
-
-string WrappedText::rest_of_string(string str, size_t start) {
-	return str.substr(start, str.size() - start);
-}
-
-WrappedText::WrappedText(cairo_t *cr, 
-												 Font *font,
-												 string str, 
-												 double max_width, 
-												 double line_spacing)
-	:DrawableText(cr, font, str), max_width(max_width), line_spacing(line_spacing) 
-{
-
-	string _str = str, line;
-
-	while (UnwrappedText(cr, font, _str).width() > max_width) {
-		line = longest_substring_that_fits(_str);
-		lines.push_back(new UnwrappedText(cr, font, line));
-		_str = rest_of_string(_str, line.size() + 1);
-	}
-	lines.push_back(new UnwrappedText(cr, font, _str));
-
-	size.width = lines.size() > 1 ? max_width : lines[0]->width();
-	size.height = (lines.size() + line_spacing) * lines[0]->height();
-}
-
-WrappedText::~WrappedText() {
-	for (long unsigned int i=0; i<lines.size(); i++)
-		delete lines[i];
-}
-
-void WrappedText::draw(Point point) {
-	Point cursor = point;
-	for (long unsigned int i=0; i<lines.size(); i++) {
-		lines[i]->draw(cursor);
-		cursor.y += lines[i]->height() + line_spacing;
-	}
-}
-
-/* Document mainly manages the Cairo surface and Cairo object *cr. */
-Document::Document(string name, Size _size) 
-	:name(name),
-	 surface(cairo_pdf_surface_create(name.c_str(), _size.width, _size.height)),
-	 cr(cairo_create(surface))
-{
-	size = _size;
-	cairo_set_line_width(cr, 0.5);
-}
-
-Document::~Document() {
-	cairo_destroy(cr);
-	cairo_surface_destroy(surface);
-}
-
-/* Typesetters get their cr from the Document they're working with. */
-Typesetter::Typesetter(Document &document) 
-	:document(document), 
-	 cr(document.cr) 
-{}
 
 /* The nested classes of ResumeTypesetter are all passed a reference to the 
 	outside class, so they can read it's properties such as it's font map, and 
@@ -151,7 +22,7 @@ ResumeTypesetter::ResumeTypesetter(Document &document, ResumeInfo info)
 	string bold_font = main_font + " Bold";
 	string italic_font = main_font + " Italic";
 
-	int small = 10, medium = 14, large = 18;
+	int small = 8, medium = 10, large = 18;
 
 	fonts["small"] = new Font(small, main_font);
 	fonts["medium"] = new Font(medium, main_font);
@@ -167,6 +38,7 @@ ResumeTypesetter::ResumeTypesetter(Document &document, ResumeInfo info)
 
 	header = new Header(*this);
 	education = new EducationSection(*this);
+	//work_experience = new ExperienceSection(*this);
 	experience = new ExperienceSection(*this);
 	skills = new SkillsSection(*this);
 }
@@ -447,6 +319,7 @@ ResumeTypesetter::ExperienceSection::ExperienceSection(
 		size.height += project->height();
 		projects.push_back(project);
 	}
+	size.height += padding;
 }
 	
 ResumeTypesetter::ExperienceSection::~ExperienceSection() {

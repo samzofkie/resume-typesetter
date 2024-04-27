@@ -1,0 +1,8 @@
+#ifndef RESUME_TYPESETTER_INCLUDE_POINT_H_
+#define RESUME_TYPESETTER_INCLUDE_POINT_H_
+
+struct Point {
+	double x, y;
+};
+
+#endif // RESUME_TYPESETTER_INCLUDE_POINT_H_

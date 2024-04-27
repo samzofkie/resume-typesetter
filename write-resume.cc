@@ -1,9 +1,13 @@
-#include "Typesetter.h"
+#include <iostream>
+#include "document.h"
+#include "resume-info.h"
+#include "resume-typesetter.h"
+using namespace std;
 
 int main() {
-	Document resume("resume.pdf");
-	
-	ResumeInfo info;
+  Document resume("test-resume.pdf");
+
+  ResumeInfo info;
 	info.name = "My Name";
 	info.links = {"myemail@email.com", "website.com/myname", "myname.com"};
 	info.school = "My College",
@@ -42,9 +46,8 @@ int main() {
 	};
 	info.skill_categories = {c1};
 
-	
-	ResumeTypesetter typesetter(resume, info);	
+  ResumeTypesetter typesetter(resume, info);
 	typesetter.write();
 
-	return 0;
+  return 0;
 }
