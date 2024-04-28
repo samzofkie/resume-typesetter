@@ -17,6 +17,11 @@ struct ProjectDescription {
 	vector<Bullet> bullets;
 };
 
+struct JobDescription {
+	string company, role, date, summary;
+	vector<Bullet> bullets;
+};
+
 struct SkillCategory {
 	string name;
 	vector<string> skills;
@@ -26,6 +31,7 @@ struct ResumeInfo {
 	string name;
 	vector<string> links = {};
 	string school, degree, school_date;
+	vector<JobDescription> jobs = {};
 	vector<ProjectDescription> projects = {};
 	vector<SkillCategory> skill_categories = {};
 };

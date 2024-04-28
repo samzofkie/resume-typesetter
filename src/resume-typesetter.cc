@@ -38,8 +38,8 @@ ResumeTypesetter::ResumeTypesetter(Document &document, ResumeInfo info)
 
 	header = new Header(*this);
 	education = new EducationSection(*this);
-	//work_experience = new ExperienceSection(*this);
-	experience = new ExperienceSection(*this);
+	jobs = new JobsSection(*this);
+	projects = new ProjectsSection(*this);
 	skills = new SkillsSection(*this);
 }
 
@@ -48,7 +48,8 @@ ResumeTypesetter::~ResumeTypesetter() {
 		delete i->second;
 	delete header;
 	delete education;
-	delete experience;
+	delete jobs;
+	delete projects;
 	delete skills;
 }
 
@@ -58,8 +59,10 @@ void ResumeTypesetter::write() {
 	cursor.y += header->height() + padding;
 	education->draw(cursor);
 	cursor.y += education->height();
-	experience->draw(cursor);
-	cursor.y += experience->height();
+	jobs->draw(cursor);
+	cursor.y += jobs->height();
+	projects->draw(cursor);
+	cursor.y += projects->height();
 	skills->draw(cursor);
 	cursor.y += skills->height() + padding;
 
@@ -264,6 +267,85 @@ void ResumeTypesetter::BulletList::draw(Point point) {
 	}
 }
 
+ResumeTypesetter::Job::Job(
+	ResumeTypesetter &typesetter,
+	double max_width,
+	JobDescription job_description
+)
+	:MaxWidthElement(typesetter, max_width),
+	 company(new UnwrappedText(cr, fonts["medium"], job_description.company)),
+	 role(new UnwrappedText(cr, fonts["small"], job_description.role)),
+	 date(new UnwrappedText(cr, fonts["small"], job_description.date)),
+	 summary(new WrappedText(
+		 cr, 
+		 fonts["small"],
+		 job_description.summary,
+		 max_width - padding
+	 )),
+	 bullets(new BulletList(
+		 typesetter, 
+		 max_width - padding,
+		 job_description.bullets
+	 ))
+{
+	size = {max_width,
+				 	company->height() + summary->height() + bullets->height()};
+}
+
+ResumeTypesetter::Job::~Job() {
+	delete company;
+	delete role;
+	delete date;
+	delete summary;
+	delete bullets;
+}
+
+void ResumeTypesetter::Job::draw(Point point) {
+	Point cursor = point;
+	company->draw(cursor);
+	
+	cursor.y += company->height();
+	cursor.x += padding;
+	summary->draw(cursor);
+	
+	cursor.y += summary->height();
+	bullets->draw(cursor);
+};
+
+ResumeTypesetter::JobsSection::JobsSection(
+	ResumeTypesetter &typesetter
+) 
+	:Section(typesetter, "Experience")
+{
+	for (size_t i=0; i<info.jobs.size(); i++) {
+		Job *job = new Job(
+			typesetter, 
+			inner_width - padding,
+			info.jobs[i]
+		);
+		size.height += job->height();
+		jobs.push_back(job);
+	}
+	size.height += padding;
+}
+	
+ResumeTypesetter::JobsSection::~JobsSection() {
+	for (size_t i=0; i<jobs.size(); i++) {
+		delete jobs[i];	
+	}
+}
+
+void ResumeTypesetter::JobsSection::draw(Point point) {
+	Point cursor = point;
+	Section::draw(cursor);
+	cursor.y += title->height();
+	cursor.x += padding;
+	for (size_t i=0; i<jobs.size(); i++) {
+		jobs[i]->draw(cursor);
+		cursor.y += jobs[i]->height();
+	}
+}
+
 ResumeTypesetter::Project::Project(
 	ResumeTypesetter &typesetter,
 	double max_width,
@@ -305,10 +387,10 @@ void ResumeTypesetter::Project::draw(Point point) {
 	bullets->draw(cursor);
 };
 
-ResumeTypesetter::ExperienceSection::ExperienceSection(
+ResumeTypesetter::ProjectsSection::ProjectsSection(
 	ResumeTypesetter &typesetter
 ) 
-	:Section(typesetter, "Experience")
+	:Section(typesetter, "Projects")
 {
 	for (size_t i=0; i<info.projects.size(); i++) {
 		Project *project = new Project(
@@ -322,13 +404,13 @@ ResumeTypesetter::ExperienceSection::ExperienceSection(
 	size.height += padding;
 }
 	
-ResumeTypesetter::ExperienceSection::~ExperienceSection() {
+ResumeTypesetter::ProjectsSection::~ProjectsSection() {
 	for (size_t i=0; i<projects.size(); i++) {
 		delete projects[i];	
 	}
 }
 
-void ResumeTypesetter::ExperienceSection::draw(Point point) {
+void ResumeTypesetter::ProjectsSection::draw(Point point) {
 	Point cursor = point;
 	Section::draw(cursor);
 	cursor.y += title->height();

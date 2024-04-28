@@ -91,6 +91,26 @@ class ResumeTypesetter : public Typesetter {
 				vector<BulletText*> bullet_texts;	
 		};
 
+		class Job : public MaxWidthElement {
+			public:
+				Job(ResumeTypesetter&, double, JobDescription);
+				virtual ~Job();
+				void draw(Point);
+			private:
+				UnwrappedText *company, *role, *date;
+				WrappedText *summary;
+				BulletList *bullets;
+		};
+
+		class JobsSection : public Section {
+			public:
+				JobsSection(ResumeTypesetter&);
+				virtual ~JobsSection();
+				void draw(Point);
+			private:
+				vector<Job*> jobs;
+		};
+
 		class Project : public MaxWidthElement {
 			public:
 				Project(ResumeTypesetter&, double, ProjectDescription);
@@ -99,13 +119,13 @@ class ResumeTypesetter : public Typesetter {
 			private:
 				UnwrappedText *name;
 				WrappedText *summary;
-				BulletList *bullets;	
+				BulletList *bullets;
 		};
 
-		class ExperienceSection : public Section {
+		class ProjectsSection : public Section {
 			public:
-				ExperienceSection(ResumeTypesetter&);
-				virtual ~ExperienceSection();
+				ProjectsSection(ResumeTypesetter&);
+				virtual ~ProjectsSection();
 				void draw(Point);
 			private:
 				vector<Project*> projects;
@@ -129,7 +149,8 @@ class ResumeTypesetter : public Typesetter {
 		double margin, padding, inner_width;
 		Header *header;
 		EducationSection *education;
-		ExperienceSection *experience;
+		JobsSection *jobs;
+		ProjectsSection *projects;
 		SkillsSection *skills;
 };
 

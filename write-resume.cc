@@ -14,6 +14,18 @@ int main() {
 	info.degree = "A college degree";
 	info.school_date = "2024";
 
+  JobDescription j1 {
+    "Company",
+    "Role",
+    "2024-????",
+    "Summary!",
+    {
+      {"This is a bullet!"}
+    }
+  };
+
+  info.jobs = {j1};
+
 	ProjectDescription p1 {
 		"My Project",
 		"This, in turn, would be the description for thee project, detailed via points of bullet in the below space:",
