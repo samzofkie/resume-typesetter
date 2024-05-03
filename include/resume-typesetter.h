@@ -17,7 +17,7 @@ using namespace std;
 /* ResumeTypesetter is initialized with a ResumeInfo object. */
 class ResumeTypesetter : public Typesetter {
 	public:
-		ResumeTypesetter(Document&, ResumeInfo);
+		ResumeTypesetter(Document&, resume_info::ResumeInfo);
 		~ResumeTypesetter();
 		void write();
 
@@ -27,7 +27,7 @@ class ResumeTypesetter : public Typesetter {
 				Element(ResumeTypesetter&);
 			protected:
 				cairo_t *cr;
-				ResumeInfo info;
+				resume_info::ResumeInfo info;
 				map<string,Font*> fonts;
 				double margin, padding, inner_width;
 		};
@@ -73,33 +73,35 @@ class ResumeTypesetter : public Typesetter {
 				virtual ~EducationSection();
 				void draw(Point);
 			private:
-				UnwrappedText *school, *degree, *date;
+				struct EducationTexts {
+					UnwrappedText *school, *degree, *date;
+				};
+				UnwrappedText *comma_seperator_symbol;
+				vector<EducationTexts*> education_texts;
 		};
 
 		class BulletList : public MaxWidthElement {
 			public:
-				BulletList(ResumeTypesetter&, double, vector<Bullet>);
+				BulletList(ResumeTypesetter&, double, vector<resume_info::Bullet>);
 				virtual ~BulletList();
 				void draw(Point);
 			private:
-				struct BulletText {
-					WrappedText *bullet_text;
-					vector<WrappedText*> subbullet_texts;
-				};
+				vector<resume_info::Bullet> bullets;
 				double bullet_spacing;
-				UnwrappedText *bullet, *subbullet;
-				vector<BulletText*> bullet_texts;	
+				UnwrappedText *bullet_symbol, *subbullet_symbol;
+				vector<WrappedText*> bullet_texts;	
 		};
 
 		class Job : public MaxWidthElement {
 			public:
-				Job(ResumeTypesetter&, double, JobDescription);
+				Job(ResumeTypesetter&, double, resume_info::JobInfo);
 				virtual ~Job();
 				void draw(Point);
 			private:
 				UnwrappedText *company, *role, *date;
 				WrappedText *summary;
 				BulletList *bullets;
+				UnwrappedText *separator_symbol;
 		};
 
 		class JobsSection : public Section {
@@ -113,7 +115,7 @@ class ResumeTypesetter : public Typesetter {
 
 		class Project : public MaxWidthElement {
 			public:
-				Project(ResumeTypesetter&, double, ProjectDescription);
+				Project(ResumeTypesetter&, double, resume_info::ProjectInfo);
 				virtual ~Project();
 				void draw(Point);
 			private:
@@ -144,7 +146,7 @@ class ResumeTypesetter : public Typesetter {
 				vector<SkillsTexts*> skills;
 		};
 
-		ResumeInfo info;
+		resume_info::ResumeInfo info;
 		map<string,Font*> fonts;
 		double margin, padding, inner_width;
 		Header *header;

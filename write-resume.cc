@@ -1,62 +1,119 @@
 #include <iostream>
+//#include <yaml.h>
 #include "document.h"
 #include "resume-info.h"
 #include "resume-typesetter.h"
 using namespace std;
 
+/*void parse_yaml() {
+	YAML::Node info = YAML::LoadFile("sam.yaml");
+	YAML::Node bullets = info["experience"][0]["bullets"];
+	
+	for (size_t i=0; i<bullets.size(); i++) {
+		if (bullets[i].IsMap()) {
+			YAML::Node node = bullets[i].begin()->second;
+			for (size_t j=0; j<node.size(); j++) {
+				cout << node[j] << "\n" << endl;
+			}
+			//cout << node << endl;
+			//cout << node.IsSequence() << endl;
+			//cout << bullets[i].begin()->second << endl;
+			//for(YAML::const_iterator it=bullets[i].begin(); it!=bullets[i].end(); ++it) {
+				//cout << it->second << endl;
+			//}
+		}
+	}
+}*/
+
 int main() {
   Document resume("test-resume.pdf");
+  
+	using namespace resume_info;
 
-  ResumeInfo info;
+	ResumeInfo info;
 	info.name = "My Name";
-	info.links = {"myemail@email.com", "website.com/myname", "myname.com"};
-	info.school = "My College",
-	info.degree = "A college degree";
-	info.school_date = "2024";
-
-  JobDescription j1 {
-    "Company",
-    "Role",
-    "2024-????",
-    "Summary!",
-    {
-      {"This is a bullet!"}
-    }
-  };
-
-  info.jobs = {j1};
-
-	ProjectDescription p1 {
-		"My Project",
-		"This, in turn, would be the description for thee project, detailed via points of bullet in the below space:",
+	info.links = {
+		{"mywebsite.com", "https://mywebsite.com"},
+		{"me@email.com", "mailto:me@email.com"},
+		{"myportfolio.com", "https://myportfolio.com"}
+	};
+	info.education = {
 		{
-			{"And indeed, this here, would be where a bullet does indeed lie."},
-			{"And here, yet lies another bullet! Hark!", 
-				{
-					"And this, here-- this is a so-called \"sub-bullet\". A curious phenomenon, nonetheless worth the steep price of implementation twice over, doesn't one agree?",
-					"How lovelyly reassuring to find that the sub-bullet functionality has agreed to work for multiple sub-bullets! The text do floweth, that's for certain."
-				}
-			},
-			{"This bullet here is just to make sure that we can nicely return to proper bulletry in spite of the preceeding sub-bulletry."}
+			"My second degree",
+			"what the degree is",
+			"when it's from"
+		},
+		{
+			"My College",
+			"my degree",
+			"grad date"
 		}
 	};
-
-	ProjectDescription p2 {
-		"Another Proj'",
-		"Hey check out this other project! It's actually pretty sick that this all works well without issues for the most part. Woo hoo.",
+	info.jobs = {
 		{
-			{"Bullet"},
-			{"Bullet"},
-			{"Bullet", {"Sub-bullet"}}
+			{"Most recent job", "link"},
+			"Role",
+			"from - to",
+			"Brief description of what I did",
+			{
+				{ "First bullet", 0 },
+				{ "Second bullet point", 0}
+			}
+		},
+		{
+			{"Second most recent job", "link"},
+			"Role",
+			"from - to",
+			"Brief summary",
+			{
+				{"First bullet", 0},
+				{"A sub bullet!", 1},
+				{"Second bullet", 0},
+				{"Second sub bullet", 1}
+			}
 		}
 	};
-
-	info.projects = {p1, p2};
-
-	SkillCategory c1 {
-		"Skills", {"Dancing", "creating art", "purposeful intention", "bad programming"}
+	info.projects = {
+		{
+			{"Project name", "project link"},
+			"Project summary",
+			{
+				{ "First bullet", 0 },
+				{ "Second bullet", 0 },
+				{ "A sub bullet", 1}
+			}
+		},
+		{
+			{"Project name", "project link"},
+			"Project summary",
+			{
+				{ "First bullet", 0 },
+				{ "Second bullet", 0 },
+				{ "A sub bullet", 1}
+			}
+		}
 	};
-	info.skill_categories = {c1};
+	info.skill_categories = {
+		{
+			"First skill category",
+			{
+				"skill1", "skill2", "skill3", "skill4"
+			}
+		},
+		{
+			"Second skill category",
+			{
+				"skill1", "skill2", "skill3", "skill4"
+			}
+		},
+		{
+			"Third skill category",
+			{
+				"skill1", "skill2", "skill3", "skill4"
+			}
+		},
+	};
+	
 
   ResumeTypesetter typesetter(resume, info);
 	typesetter.write();

@@ -3,37 +3,47 @@
 
 #include <string>
 #include <vector>
+#include <yaml.h>
 using namespace std;
 
-/* These four structs are just for separating the data ultimately written to
-	 resume in a logical structure that makes sense to the ResumeTypesetter. */
-struct Bullet {
-	string text;
-	vector<string> subbullets = {};
-};
+namespace resume_info {
+	struct Text {
+		string text, link = "";
+	};
 
-struct ProjectDescription {
-	string name, summary;
-	vector<Bullet> bullets;
-};
+	struct Bullet {
+		string text;
+		int indentation;
+	};
 
-struct JobDescription {
-	string company, role, date, summary;
-	vector<Bullet> bullets;
-};
+	struct EducationInfo {
+		string school, degree, date;
+	};
 
-struct SkillCategory {
-	string name;
-	vector<string> skills;
-};
+	struct JobInfo {
+		Text company;
+		string role, date, summary;
+		vector<Bullet> bullets;
+	};
 
-struct ResumeInfo {
-	string name;
-	vector<string> links = {};
-	string school, degree, school_date;
-	vector<JobDescription> jobs = {};
-	vector<ProjectDescription> projects = {};
-	vector<SkillCategory> skill_categories = {};
-};
+	struct ProjectInfo {
+		Text name;
+		string summary;
+		vector<Bullet> bullets;
+	};
 
+	struct SkillCategory {
+		string name;
+		vector<string> skills;
+	};
+
+	struct ResumeInfo {
+		string name;
+		vector<Text> links = {};
+		vector<EducationInfo> education = {};
+		vector<JobInfo> jobs = {};
+		vector<ProjectInfo> projects = {};
+		vector<SkillCategory> skill_categories = {};
+	};
+}
 #endif // RESUME_TYPESETTER_INCLUDE_RESUME_INFO_H_

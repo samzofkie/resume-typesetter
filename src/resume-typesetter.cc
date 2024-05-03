@@ -10,7 +10,7 @@
 #include "point.h"
 #include <pango/pangocairo.h>
 using namespace std;
-
+using namespace resume_info;
 
 /* The nested classes of ResumeTypesetter are all passed a reference to the 
 	outside class, so they can read it's properties such as it's font map, and 
@@ -22,15 +22,16 @@ ResumeTypesetter::ResumeTypesetter(Document &document, ResumeInfo info)
 	string bold_font = main_font + " Bold";
 	string italic_font = main_font + " Italic";
 
-	int small = 8, medium = 10, large = 18;
+	int small = 8, medium = 10, large = 18, unbold_large = 12;
 
 	fonts["small"] = new Font(small, main_font);
 	fonts["medium"] = new Font(medium, main_font);
 	fonts["large"] = new Font(large, main_font);
-	fonts["section"] = new Font(medium, bold_font);
+	fonts["section"] = new Font(unbold_large, main_font);
 	fonts["name"] = new Font(large, bold_font);
 	fonts["small bold"] = new Font(small, bold_font);
 	fonts["small italic"] = new Font(small, italic_font);
+	fonts["medium bold"] = new Font(medium, bold_font);
 
 	margin = 25;
 	padding = 10;
@@ -57,18 +58,18 @@ void ResumeTypesetter::write() {
 	Point cursor {margin, margin};
 	header->draw(cursor);
 	cursor.y += header->height() + padding;
+
 	education->draw(cursor);
 	cursor.y += education->height();
+
 	jobs->draw(cursor);
 	cursor.y += jobs->height();
+
 	projects->draw(cursor);
 	cursor.y += projects->height();
+
 	skills->draw(cursor);
 	cursor.y += skills->height() + padding;
-
-	WrappedText cute_note(cr, fonts["small italic"], "This resume was typeset with a program I wrote in C++", inner_width);
-	cursor.x = margin + (inner_width - cute_note.width()) / 2;
-	cute_note.draw(cursor);
 }
 
 ResumeTypesetter::Element::Element(ResumeTypesetter &typesetter)
@@ -103,7 +104,7 @@ ResumeTypesetter::Header::Header(ResumeTypesetter &typesetter)
 	size.width = inner_width;
 	size.height = 0;
 	for (size_t i = 0; i < info.links.size(); i++) {
-		UnwrappedText *p = new UnwrappedText(cr, fonts["small"], info.links[i]);
+		UnwrappedText *p = new UnwrappedText(cr, fonts["small"], info.links[i].text);
 		size.height += p->height();
 		links.push_back(p);
 	}
@@ -169,17 +170,26 @@ ResumeTypesetter::EducationSection::EducationSection(
 	ResumeTypesetter &typesetter
 ) 
 	:Section(typesetter, "Education"),
-	 school(new UnwrappedText(cr, fonts["small bold"], info.school)),
-   degree(new UnwrappedText(cr, fonts["small"], ", " + info.degree)),
-	 date(new UnwrappedText(cr, fonts["small"], info.school_date))
+	  comma_seperator_symbol(new UnwrappedText(cr, fonts["small"], ", "))
 {
-	size.height += school->height() + padding;
+	for (size_t i=0; i<info.education.size(); i++) {
+		education_texts.push_back(new EducationTexts);
+		EducationTexts *curr = education_texts[i];
+		curr->school = new UnwrappedText(cr, fonts["small bold"], info.education[i].school);
+		curr->degree = new UnwrappedText(cr, fonts["small"], info.education[i].degree);
+		curr->date = new UnwrappedText(cr, fonts["small"], info.education[i].date);
+		size.height += curr->school->height() + padding / 2;
+	}
 }
 
 ResumeTypesetter::EducationSection::~EducationSection() {
-	delete school;
-	delete degree;
-	delete date;
+	delete comma_seperator_symbol;
+	for (size_t i=0; i<education_texts.size(); i++) {
+		EducationTexts *curr = education_texts[i];
+		delete curr->school;
+		delete curr->degree;
+		delete curr->date;
+	}
 }
 
 void ResumeTypesetter::EducationSection::draw(Point point) {
@@ -187,11 +197,19 @@ void ResumeTypesetter::EducationSection::draw(Point point) {
 	Section::draw(cursor);
 	cursor.y += title->height() + padding / 2;
 	cursor.x += padding / 2;
-	school->draw(cursor);
-	cursor.x += school->width();
-	degree->draw(cursor);
-	cursor.x = point.x + size.width - date->width() - padding / 2;
-	date->draw(cursor);
+
+	for (vector<EducationTexts*>::iterator it = education_texts.begin(); it != education_texts.end(); it++) {
+		EducationTexts *curr = *it;
+		curr->school->draw(cursor);
+		cursor.x += curr->school->width();
+		comma_seperator_symbol->draw(cursor);
+		cursor.x += comma_seperator_symbol->width();
+		curr->degree->draw(cursor);
+		cursor.x = point.x + size.width - curr->date->width() - padding / 2;
+		curr->date->draw(cursor);
+		cursor.y += curr->school->height();
+		cursor.x = point.x + padding / 2;
+	}
 }
 
 ResumeTypesetter::BulletList::BulletList(
@@ -200,96 +218,75 @@ ResumeTypesetter::BulletList::BulletList(
 	vector<Bullet> bullets
 )
 	:MaxWidthElement(typesetter, max_width), 
+	 bullets(bullets),
 	 bullet_spacing(15),
-	 bullet(new UnwrappedText(cr, fonts["small"], "•")),
-	 subbullet(new UnwrappedText(cr, fonts["small"], "○"))
+	 bullet_symbol(new UnwrappedText(cr, fonts["small"], "•")),
+	 subbullet_symbol(new UnwrappedText(cr, fonts["small"], "○"))
 {
 	size.height = 0;
 	
 	for (size_t i=0; i<bullets.size(); i++) {
-		bullet_texts.push_back(new BulletText);
-		
-		bullet_texts[i]->bullet_text = new WrappedText(
+		WrappedText *new_bullet = new WrappedText(
 			cr,
-			fonts["small"], 
+			fonts["small"],
 			bullets[i].text,
-			max_width - bullet_spacing);
-		
-		size.height += bullet_texts[i]->bullet_text->height();
-		
-		bullet_texts[i]->subbullet_texts = {};
-		
-		for (size_t j=0; j<bullets[i].subbullets.size(); j++) {
-			
-			bullet_texts[i]->subbullet_texts.push_back(new WrappedText(
-				cr,
-				fonts["small"], 
-				bullets[i].subbullets[j],
-				max_width - bullet_spacing * 2)
-			);
-			
-			size.height += bullet_texts[i]->subbullet_texts[j]->height();
-		}
+			max_width - (bullet_spacing * bullets[i].indentation)
+		);
+		size.height += new_bullet->height();
+		bullet_texts.push_back(new_bullet);
 	}
 	size.width = inner_width - padding * 3;
 }
 
 ResumeTypesetter::BulletList::~BulletList() {
-	delete bullet;
-	delete subbullet;
+	delete bullet_symbol;
+	delete subbullet_symbol;
 	for (size_t i=0; i<bullet_texts.size(); i++) {
-		delete bullet_texts[i]->bullet_text;
-		for (size_t j=0; j<bullet_texts[i]->subbullet_texts.size(); j++) {
-			delete bullet_texts[i]->subbullet_texts[j];
-		}
 		delete bullet_texts[i];
 	}
 }
 
 void ResumeTypesetter::BulletList::draw(Point point) {
 	Point cursor = point;
+	point.x += 0;
   for (size_t i=0; i<bullet_texts.size(); i++) {
-		cursor.x = point.x;
-		bullet->draw(cursor);
-		
+		WrappedText *curr = bullet_texts[i];
+		cursor.x = point.x + (bullets[i].indentation * bullet_spacing);
+
+		if (bullets[i].indentation % 2 == 0)
+			bullet_symbol->draw(cursor);
+		else 
+			subbullet_symbol->draw(cursor);
 		cursor.x += bullet_spacing;
-		bullet_texts[i]->bullet_text->draw(cursor);
 		
-		cursor.y += bullet_texts[i]->bullet_text->height();
-		for (size_t j=0; j<bullet_texts[i]->subbullet_texts.size(); j++) {
-			cursor.x = point.x + bullet_spacing;
-			subbullet->draw(cursor);
-			
-			cursor.x += bullet_spacing;
-			bullet_texts[i]->subbullet_texts[j]->draw(cursor);
-			cursor.y += bullet_texts[i]->subbullet_texts[j]->height();
-		}
+		curr->draw(cursor);
+		cursor.y += curr->height();
 	}
 }
 
 ResumeTypesetter::Job::Job(
 	ResumeTypesetter &typesetter,
 	double max_width,
-	JobDescription job_description
+	JobInfo job_info
 )
 	:MaxWidthElement(typesetter, max_width),
-	 company(new UnwrappedText(cr, fonts["medium"], job_description.company)),
-	 role(new UnwrappedText(cr, fonts["small"], job_description.role)),
-	 date(new UnwrappedText(cr, fonts["small"], job_description.date)),
+	 company(new UnwrappedText(cr, fonts["medium bold"], job_info.company.text)),
+	 role(new UnwrappedText(cr, fonts["medium bold"], job_info.role)),
+	 date(new UnwrappedText(cr, fonts["small"], job_info.date)),
 	 summary(new WrappedText(
 		 cr, 
 		 fonts["small"],
-		 job_description.summary,
+		 job_info.summary,
 		 max_width - padding
 	 )),
 	 bullets(new BulletList(
 		 typesetter, 
 		 max_width - padding,
-		 job_description.bullets
-	 ))
+		 job_info.bullets
+	 )),
+	 separator_symbol(new UnwrappedText(cr, fonts["small"], "— "))
 {
-	size = {max_width,
-				 	company->height() + summary->height() + bullets->height()};
+	size = {max_width, company->height() + summary->height() + bullets->height()};
 }
 
 ResumeTypesetter::Job::~Job() {
@@ -298,17 +295,32 @@ ResumeTypesetter::Job::~Job() {
 	delete date;
 	delete summary;
 	delete bullets;
+	delete separator_symbol;
 }
 
 void ResumeTypesetter::Job::draw(Point point) {
 	Point cursor = point;
+
 	company->draw(cursor);
+	cursor.x += company->width();
 	
-	cursor.y += company->height();
-	cursor.x += padding;
+	separator_symbol->draw({
+		cursor.x,
+		cursor.y + 2
+	});
+	cursor.x += separator_symbol->width();
+	
+	role->draw(cursor);
+	cursor.x = margin + padding + max_width - date->width();
+	cursor.y += role->height() - date->height();
+	
+	date->draw(cursor);
+	cursor.x = point.x + padding;
+	cursor.y += date->height();
+
 	summary->draw(cursor);
-	
 	cursor.y += summary->height();
+
 	bullets->draw(cursor);
 };
 
@@ -326,7 +338,6 @@ ResumeTypesetter::JobsSection::JobsSection(
 		size.height += job->height();
 		jobs.push_back(job);
 	}
-	size.height += padding;
 }
 	
 ResumeTypesetter::JobsSection::~JobsSection() {
@@ -346,23 +357,24 @@ void ResumeTypesetter::JobsSection::draw(Point point) {
 	}
 }
 
+
 ResumeTypesetter::Project::Project(
 	ResumeTypesetter &typesetter,
 	double max_width,
-	ProjectDescription project_description
+	ProjectInfo project_info
 )
 	:MaxWidthElement(typesetter, max_width),
-	 name(new UnwrappedText(cr, fonts["medium"], project_description.name)),
+	 name(new UnwrappedText(cr, fonts["medium bold"], project_info.name.text)),
 	 summary(new WrappedText(
 		 cr, 
 		 fonts["small"],
-		 project_description.summary,
+		 project_info.summary,
 		 max_width - padding
 	 )),
 	 bullets(new BulletList(
 		 typesetter, 
 		 max_width - padding,
-		 project_description.bullets
+		 project_info.bullets
 	 ))
 {
 	size = {max_width,
@@ -401,7 +413,6 @@ ResumeTypesetter::ProjectsSection::ProjectsSection(
 		size.height += project->height();
 		projects.push_back(project);
 	}
-	size.height += padding;
 }
 	
 ResumeTypesetter::ProjectsSection::~ProjectsSection() {
@@ -420,6 +431,7 @@ void ResumeTypesetter::ProjectsSection::draw(Point point) {
 		cursor.y += projects[i]->height();
 	}
 }
+
 
 ResumeTypesetter::SkillsSection::SkillsSection(ResumeTypesetter &typesetter)
 	:Section(typesetter, "Skills")
