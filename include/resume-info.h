@@ -37,13 +37,20 @@ namespace resume_info {
 		vector<string> skills;
 	};
 
-	struct ResumeInfo {
-		string name;
-		vector<Text> links = {};
-		vector<EducationInfo> education = {};
-		vector<JobInfo> jobs = {};
-		vector<ProjectInfo> projects = {};
-		vector<SkillCategory> skill_categories = {};
+	class ResumeInfo {
+		public:
+			ResumeInfo() = default;
+			ResumeInfo(YAML::Node);
+			
+			string name;
+			vector<Text> links = {};
+			vector<EducationInfo> education = {};
+			vector<JobInfo> jobs = {};
+			vector<ProjectInfo> projects = {};
+			vector<SkillCategory> skill_categories = {};
+
+		private:
+			vector<Bullet> parse_bullets(YAML::Node);
 	};
 }
 #endif // RESUME_TYPESETTER_INCLUDE_RESUME_INFO_H_

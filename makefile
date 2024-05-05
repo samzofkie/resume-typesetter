@@ -8,9 +8,9 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.cc)
 OBJ_FILES := $(SRC_FILES:$(SRC_DIR)/%.cc=$(OBJ_DIR)/%.o)
 
 CXX := clang++
-CPPFLAGS := `pkg-config --cflags pangocairo` -Iinclude
+CPPFLAGS := `pkg-config --cflags pangocairo` -Iinclude -I/usr/include/yaml-cpp
 CXXFLAGS := -Wall -Wextra -Werror
-LDLIBS := `pkg-config --libs pangocairo`
+LDLIBS := `pkg-config --libs pangocairo yaml-cpp`
 
 .PHONY: all
 

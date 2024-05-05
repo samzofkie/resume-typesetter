@@ -1,0 +1,67 @@
+filename: test-resume.pdf
+name: My name
+links:
+  - text: mywebsite.com
+    link: https://mywebsite.com
+  - text: me@email.com
+    link: mailto:me@email.com
+  - text: myportfolio.com/me
+    link: https://myportfolio.com/me
+education:
+  - school: My second school
+    degree: Another degree
+    date: from - to
+  - school: My college
+    degree: My degree
+    date: from - to
+experience:
+  - company:
+      text: Company name
+      link: company link
+    role: Role
+    date: from - to
+    summary: A brief summary of role and responsibilities
+    bullets:
+      - one
+      - two:
+        - sub bullet
+        - sub bullet 2
+  - company:
+      text: Company name
+      link: company link
+    role: Role
+    date: from - to
+    summary: A brief summary of role and responsibilities
+    bullets:
+      - one
+      - two:
+        - sub bullet
+        - sub bullet 2
+projects:
+  - name:
+      text: Project name
+      link: project link
+    summary: summary
+    bullets:
+      - bullet 1
+      - bullet 2:
+        - sub bullet
+      - bullet 2
+  - name:
+      text: Project name
+      link: project link
+    summary: summary
+    bullets:
+      - bullet 1
+      - bullet 2:
+        - sub bullet
+      - bullet 2
+skills:
+  first skill category:
+    - skill1
+    - skill2
+  second skill category:
+    - skill3
+    - skill4
+    - skill5
+    - skill6
