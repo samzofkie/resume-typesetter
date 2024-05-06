@@ -37,11 +37,15 @@ ResumeInfo::ResumeInfo(YAML::Node yaml_file) {
 
   for (size_t i=0; i<yaml_file["experience"].size(); i++) {
     YAML::Node job = yaml_file["experience"][i];
+
+    Text company;
+    company.text = job["company"]["text"].as<string>();
+    if (job["company"]["link"].IsDefined()) {
+      company.link = job["company"]["link"].as<string>();
+    }
+
     jobs.push_back({
-      {
-        job["company"]["text"].as<string>(),
-        job["company"]["link"].as<string>()
-      },
+      company,
       job["role"].as<string>(),
       job["date"].as<string>(),
       job["summary"].as<string>(),
@@ -51,11 +55,16 @@ ResumeInfo::ResumeInfo(YAML::Node yaml_file) {
 
   for (size_t i=0; i<yaml_file["projects"].size(); i++) {
     YAML::Node project = yaml_file["projects"][i];
+
+
+    Text name;
+    name.text = project["name"]["text"].as<string>();
+    if (project["name"]["link"].IsDefined()) {
+      name.link = project["name"]["link"].as<string>();
+    }
+
     projects.push_back({
-      {
-        project["name"]["text"].as<string>(),
-        project["name"]["link"].as<string>()
-      },
+      name,
       project["summary"].as<string>(),
       parse_bullets(project["bullets"])
     });

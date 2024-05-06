@@ -17,7 +17,7 @@ education:
 experience:
   - company:
       text: Company name
-      link: company link
+      link: https://company.com
     role: Role
     date: from - to
     summary: A brief summary of role and responsibilities
@@ -28,7 +28,6 @@ experience:
         - sub bullet 2
   - company:
       text: Company name
-      link: company link
     role: Role
     date: from - to
     summary: A brief summary of role and responsibilities
@@ -40,7 +39,7 @@ experience:
 projects:
   - name:
       text: Project name
-      link: project link
+      #link: ""
     summary: summary
     bullets:
       - bullet 1
@@ -49,7 +48,7 @@ projects:
       - bullet 2
   - name:
       text: Project name
-      link: project link
+      link: https://project.com
     summary: summary
     bullets:
       - bullet 1

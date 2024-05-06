@@ -98,6 +98,7 @@ class ResumeTypesetter : public Typesetter {
 				virtual ~Job();
 				void draw(Point);
 			private:
+				resume_info::JobInfo job_info;
 				UnwrappedText *company, *role, *date;
 				WrappedText *summary;
 				BulletList *bullets;
@@ -119,6 +120,7 @@ class ResumeTypesetter : public Typesetter {
 				virtual ~Project();
 				void draw(Point);
 			private:
+				resume_info::ProjectInfo project_info;
 				UnwrappedText *name;
 				WrappedText *summary;
 				BulletList *bullets;

@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <iostream>
 #include "typesetter.h"
 #include "document.h"
 #include "drawable.h"
@@ -122,7 +123,9 @@ void ResumeTypesetter::Header::draw(Point point) {
 	cairo_set_source_rgb(cr, 0, 0, 1);
 	for (size_t i=0; i < links.size(); i++) {
 		cursor.x += (size.width - links[i]->width());
+		cairo_tag_begin(cr, CAIRO_TAG_LINK, ("uri='" + info.links[i].link + "'").c_str());
 		links[i]->draw(cursor);
+		cairo_tag_end(cr, CAIRO_TAG_LINK);
 
 		int underline_height = fonts["small"]->size() / 5;
 		
@@ -270,6 +273,7 @@ ResumeTypesetter::Job::Job(
 	JobInfo job_info
 )
 	:MaxWidthElement(typesetter, max_width),
+	 job_info(job_info),
 	 company(new UnwrappedText(cr, fonts["medium bold"], job_info.company.text)),
 	 role(new UnwrappedText(cr, fonts["medium bold"], job_info.role)),
 	 date(new UnwrappedText(cr, fonts["small"], job_info.date)),
@@ -301,7 +305,24 @@ ResumeTypesetter::Job::~Job() {
 void ResumeTypesetter::Job::draw(Point point) {
 	Point cursor = point;
 
-	company->draw(cursor);
+	if (job_info.company.link.size()) {
+		cairo_set_source_rgb(cr, 0, 0, 1);
+		cairo_tag_begin(cr, CAIRO_TAG_LINK, ("uri='" + job_info.company.link + "'").c_str());
+		company->draw(cursor);
+
+		int underline_height = fonts["medium bold"]->size() / 5;
+		double y_start = cursor.y;
+		cursor.y += company->height() - underline_height;
+		cairo_move_to(cr, cursor.x, cursor.y);
+		cairo_line_to(cr, cursor.x + company->width(), cursor.y);
+		cairo_stroke(cr);
+		cursor.y = y_start;
+
+		cairo_tag_end(cr, CAIRO_TAG_LINK);
+		cairo_set_source_rgb(cr, 0, 0, 0);
+	} else {
+		company->draw(cursor);
+	}
 	cursor.x += company->width();
 	
 	separator_symbol->draw({
@@ -364,6 +385,7 @@ ResumeTypesetter::Project::Project(
 	ProjectInfo project_info
 )
 	:MaxWidthElement(typesetter, max_width),
+	 project_info(project_info),
 	 name(new UnwrappedText(cr, fonts["medium bold"], project_info.name.text)),
 	 summary(new WrappedText(
 		 cr, 
@@ -389,7 +411,24 @@ ResumeTypesetter::Project::~Project() {
 
 void ResumeTypesetter::Project::draw(Point point) {
 	Point cursor = point;
-	name->draw(cursor);
+	if (project_info.name.link.size()) {
+		cairo_set_source_rgb(cr, 0, 0, 1);
+		cairo_tag_begin(cr, CAIRO_TAG_LINK, ("uri='" + project_info.name.link + "'").c_str());
+		name->draw(cursor);
+
+		int underline_height = fonts["medium bold"]->size() / 5;
+		double y_start = cursor.y;
+		cursor.y += name->height() - underline_height;
+		cairo_move_to(cr, cursor.x, cursor.y);
+		cairo_line_to(cr, cursor.x + name->width(), cursor.y);
+		cairo_stroke(cr);
+		cursor.y = y_start;
+
+		cairo_tag_end(cr, CAIRO_TAG_LINK);
+		cairo_set_source_rgb(cr, 0, 0, 0);
+	} else {
+		name->draw(cursor);
+	}
 	
 	cursor.y += name->height();
 	cursor.x += padding;
